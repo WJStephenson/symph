@@ -2,22 +2,41 @@ import { useId, memo, useCallback, useEffect, useRef, useState } from "react";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 
+const DEFAULT_HEIGHT = 32;
+
 type Props = {
   onSeek: (sec: number) => void;
   accent?: string | null;
   height?: number;
 };
 
+function yOnWave(
+  x: number,
+  width: number,
+  height: number,
+  phase: number,
+  amplitude: number
+): number {
+  const mid = height * 0.5;
+  if (width <= 0 || amplitude <= 0) return mid;
+  const freq = (Math.PI * 2 * 2.05) / width;
+  return mid + amplitude * Math.sin(phase + x * freq);
+}
+
 function buildWavePath(width: number, height: number, phase: number, amplitude: number): string {
   const mid = height * 0.5;
-  const segments = Math.max(28, Math.min(96, Math.floor(width / 12)));
-  const dx = width / segments;
-  let d = `M 0 ${mid.toFixed(2)}`;
-  const freq = (Math.PI * 2 * 2.1) / Math.max(width, 1);
-  for (let i = 1; i <= segments; i++) {
-    const x = i * dx;
-    const y = mid + amplitude * Math.sin(phase + x * freq);
-    d += ` L ${x.toFixed(1)} ${y.toFixed(2)}`;
+  if (width <= 0) return `M 0 ${mid} L 0 ${mid}`;
+  if (amplitude <= 0.001) {
+    const y = mid;
+    return `M 0 ${y.toFixed(2)} L ${width.toFixed(2)} ${y.toFixed(2)}`;
+  }
+  const n = Math.max(24, Math.min(140, Math.ceil(width / 2.5)));
+  const y0 = yOnWave(0, width, height, phase, amplitude);
+  let d = `M 0 ${y0.toFixed(3)}`;
+  for (let i = 1; i <= n; i++) {
+    const x = (i / n) * width;
+    const y = yOnWave(x, width, height, phase, amplitude);
+    d += ` L ${x.toFixed(2)} ${y.toFixed(3)}`;
   }
   return d;
 }
@@ -25,7 +44,7 @@ function buildWavePath(width: number, height: number, phase: number, amplitude: 
 export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   onSeek,
   accent,
-  height = 88
+  height = DEFAULT_HEIGHT
 }: Props) {
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
@@ -38,11 +57,14 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   const [dragging, setDragging] = useState(false);
   const [local, setLocal] = useState(positionSec);
   const phaseRef = useRef(0);
+  const ampRef = useRef(0);
   const rafRef = useRef(0);
 
   useEffect(() => {
     if (!dragging) setLocal(positionSec);
   }, [positionSec, dragging]);
+
+  const ampMax = Math.min(height * 0.38, 11);
 
   const paintBoth = useCallback(
     (phase: number, amp: number) => {
@@ -67,28 +89,36 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   }, []);
 
   useEffect(() => {
-    if (!isPlaying) {
-      cancelAnimationFrame(rafRef.current);
-      paintBoth(phaseRef.current, 0);
-      return;
-    }
     let last = performance.now();
+    let mounted = true;
     const tick = (t: number) => {
+      if (!mounted) return;
       const dt = Math.min(0.05, (t - last) / 1000);
       last = t;
-      phaseRef.current += dt * 2.35;
-      const amp = Math.min(height * 0.22, 22);
-      paintBoth(phaseRef.current, amp);
-      rafRef.current = requestAnimationFrame(tick);
+      const target = isPlaying ? ampMax : 0;
+      const k = 1 - Math.exp(-dt * 11);
+      ampRef.current += (target - ampRef.current) * k;
+      if (isPlaying) {
+        phaseRef.current += dt * 2.15;
+      }
+      paintBoth(phaseRef.current, ampRef.current);
+      const settling = Math.abs(ampRef.current - target) > 0.008;
+      if (isPlaying || settling || dragging) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying, svgWidth, height, paintBoth]);
+    return () => {
+      mounted = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [isPlaying, svgWidth, height, ampMax, paintBoth, dragging]);
 
   useEffect(() => {
-    if (isPlaying) return;
-    paintBoth(phaseRef.current, 0);
-  }, [svgWidth, isPlaying, paintBoth]);
+    if (isPlaying || dragging) return;
+    const id = requestAnimationFrame(() => paintBoth(phaseRef.current, ampRef.current));
+    return () => cancelAnimationFrame(id);
+  }, [svgWidth, isPlaying, dragging, paintBoth]);
 
   const playedFrac = durationSec > 0 ? Math.min(1, Math.max(0, local / durationSec)) : 0;
   const clipW = svgWidth * playedFrac;
@@ -123,11 +153,12 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
 
   const strokeMuted = "rgba(255,255,255,0.22)";
   const strokeAccent = accent ?? "rgb(165,180,252)";
+  const handleLeftPct = playedFrac * 100;
 
   return (
     <div
       ref={wrapRef}
-      className="relative w-full rounded-2xl bg-black/40 touch-none select-none cursor-pointer overflow-hidden"
+      className="relative w-full rounded-2xl bg-black/40 touch-none select-none cursor-pointer overflow-visible"
       style={{ height }}
       onPointerDown={(e) => {
         setDragging(true);
@@ -136,7 +167,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       }}
     >
       <svg
-        className="block w-full"
+        className="absolute inset-0 w-full"
         width="100%"
         height={height}
         viewBox={`0 0 ${svgWidth} ${height}`}
@@ -152,23 +183,26 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
           d={pathD}
           fill="none"
           stroke={strokeMuted}
-          strokeWidth={2.25}
+          strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
         />
         <path
           ref={playedRef}
           d={pathD}
           fill="none"
           stroke={strokeAccent}
-          strokeWidth={2.5}
+          strokeWidth={2.25}
           strokeLinecap="round"
           strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
           clipPath={`url(#${clipId})`}
         />
       </svg>
+      <div
+        className="pointer-events-none absolute top-1/2 z-10 size-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-white/95 shadow-md"
+        style={{ left: `${handleLeftPct}%` }}
+        aria-hidden
+      />
     </div>
   );
 });

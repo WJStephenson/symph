@@ -147,7 +147,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <p className="text-zinc-400 mt-1">{track.artist}</p>
           {track.albumTitle && <p className="text-sm text-zinc-500 mt-1">{track.albumTitle}</p>}
         </div>
-        <WaveLineSeekBar onSeek={onSeek} accent={accent} height={96} />
+        <WaveLineSeekBar onSeek={onSeek} accent={accent} height={32} />
         <div className="flex justify-between text-xs text-zinc-500">
           <span>{formatDuration(positionSec)}</span>
           <span>{formatDuration(durationSec)}</span>

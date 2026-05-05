@@ -105,7 +105,6 @@ export function ShellLayout() {
           </div>
           <div className="hidden group-hover/sidebar:block">
             <div className="font-display text-xl tracking-tight text-white">Symph</div>
-            <div className="text-xs text-zinc-500">Jellyfin music</div>
           </div>
         </button>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">

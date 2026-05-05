@@ -127,7 +127,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   return (
     <div
       ref={wrapRef}
-      className="relative w-full rounded-2xl border border-white/10 bg-black/40 touch-none select-none cursor-pointer overflow-hidden"
+      className="relative w-full rounded-2xl bg-black/40 touch-none select-none cursor-pointer overflow-hidden"
       style={{ height }}
       onPointerDown={(e) => {
         setDragging(true);

@@ -2,7 +2,6 @@ import type { CSSProperties, ReactElement } from "react";
 import { useMemo, useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
-import { MiniPlayerBar } from "@/components/MiniPlayerBar";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
@@ -39,6 +38,8 @@ export function ShellLayout() {
     startViewTransitionIfSupported(() => setSheetOpen(false));
   };
 
+  const expandGutter = "max(calc(1rem + var(--safe-top)), calc(1rem + var(--safe-bottom)), calc(4.25rem + var(--safe-bottom)))";
+
   const shellVars = {
     ["--symph-tone"]: theme.fill,
     ["--symph-accent"]: theme.fill,
@@ -48,7 +49,9 @@ export function ShellLayout() {
     ["--symph-bottom-wash"]: [
       `radial-gradient(95% 55% at 50% 100%, color-mix(in srgb, var(--symph-tone) 18%, transparent) 0%, transparent 72%)`,
       `linear-gradient(180deg, transparent 0%, transparent 42%, color-mix(in srgb, var(--symph-tone) 10%, transparent) 100%)`
-    ].join(", ")
+    ].join(", "),
+    ["--symph-player-expand-top"]: expandGutter,
+    ["--symph-player-expand-bottom"]: expandGutter
   } as CSSProperties;
 
   return (
@@ -69,13 +72,24 @@ export function ShellLayout() {
           <Outlet />
         </main>
       </div>
-      {showPlayer && !sheetOpen && (
+      {showPlayer && (
         <div
-          className="fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8"
-          style={{ viewTransitionName: "symph-mini-chrome" }}
+          className={`fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none ${
+            sheetOpen ? "top-[var(--symph-player-expand-top)]" : ""
+          }`}
         >
-          <MiniPlayerBar onExpand={openSheet} />
+          <div className={`pointer-events-auto min-h-0 ${sheetOpen ? "flex-1 flex flex-col justify-end" : ""}`}>
+            <NowPlayingSheet open={sheetOpen} onOpen={openSheet} onClose={closeSheet} />
+          </div>
         </div>
+      )}
+      {sheetOpen && (
+        <button
+          type="button"
+          aria-label="Dismiss now playing"
+          className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-[1px] md:left-[var(--symph-sidebar-w)]"
+          onClick={closeSheet}
+        />
       )}
       <nav className="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/10 pb-[calc(0.5rem+var(--safe-bottom))] pt-2 md:hidden">
         <div className="max-w-lg mx-auto flex justify-around items-end">
@@ -104,7 +118,6 @@ export function ShellLayout() {
         <div className="flex-1" />
       </aside>
       <PlaybackEngine />
-      <NowPlayingSheet open={sheetOpen} onClose={closeSheet} />
     </div>
   );
 }

@@ -15,8 +15,23 @@ function normaliseServerUrl(url: string): string {
   return trimmed;
 }
 
+function jellyfinHostname(session: JellyfinSession): string {
+  try {
+    return new URL(session.serverUrl).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function pageHostname(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.hostname.toLowerCase();
+}
+
 function mediaApiUrl(session: JellyfinSession, built: URL): string {
-  if (pageIsHttps() && session.serverUrl.startsWith("http://")) {
+  const jellyHost = jellyfinHostname(session);
+  const sameHost = jellyHost !== "" && jellyHost === pageHostname();
+  if (pageIsHttps() && session.serverUrl.startsWith("http://") && sameHost) {
     return `${built.pathname}${built.search}`;
   }
   return built.toString();
@@ -67,9 +82,13 @@ export function buildHeaders(session: JellyfinSession): HeadersInit {
 }
 
 export async function fetchUserViews(session: JellyfinSession): Promise<BaseItemDto[]> {
-  const url = new URL(`${session.serverUrl}/UserViews`);
-  url.searchParams.set("userId", session.userId);
-  const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
+  const primary = new URL(`${session.serverUrl}/UserViews`);
+  primary.searchParams.set("userId", session.userId);
+  let res = await fetch(mediaApiUrl(session, primary), { headers: buildHeaders(session) });
+  if (!res.ok && res.status === 404) {
+    const legacy = new URL(`${session.serverUrl}/Users/${session.userId}/Views`);
+    res = await fetch(mediaApiUrl(session, legacy), { headers: buildHeaders(session) });
+  }
   if (!res.ok) throw new Error("Could not load libraries");
   const data = (await res.json()) as ItemsResponse;
   return data.Items ?? [];

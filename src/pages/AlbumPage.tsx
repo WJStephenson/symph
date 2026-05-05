@@ -55,7 +55,14 @@ export function AlbumPage() {
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,320px)_1fr] gap-8 items-start">
           <div className="mx-auto w-full max-w-xs md:max-w-none">
             <div className="rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl ring-1 ring-white/10 aspect-square">
-              <ArtworkImage session={session} itemId={album.Id} className="w-full h-full object-cover" alt="" maxWidth={720} />
+              <ArtworkImage
+                session={session}
+                itemId={album.Id}
+                item={album}
+                className="w-full h-full object-cover"
+                alt=""
+                maxWidth={720}
+              />
             </div>
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <button

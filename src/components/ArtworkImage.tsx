@@ -1,10 +1,12 @@
 import { memo, useEffect, useState } from "react";
 import { getArtworkObjectUrl, peekArtworkObjectUrl } from "@/jellyfin/artworkCache";
-import type { JellyfinSession } from "@/jellyfin/types";
+import type { BaseItemDto, JellyfinSession } from "@/jellyfin/types";
+import { primaryImageKnownAbsent } from "@/lib/format";
 
 type Props = {
   session: JellyfinSession;
   itemId: string;
+  item?: BaseItemDto;
   className?: string;
   alt?: string;
   type?: "Primary" | "Backdrop";
@@ -17,6 +19,7 @@ type Props = {
 export const ArtworkImage = memo(function ArtworkImage({
   session,
   itemId,
+  item,
   className,
   alt,
   type = "Primary",
@@ -25,11 +28,18 @@ export const ArtworkImage = memo(function ArtworkImage({
   priority = false,
   skipColourAnalysis = false
 }: Props) {
+  const skipFetch =
+    item && item.Id === itemId ? primaryImageKnownAbsent(item) : false;
+
   const [url, setUrl] = useState<string | null>(() =>
-    peekArtworkObjectUrl(session, itemId, { type, maxWidth })
+    skipFetch ? null : peekArtworkObjectUrl(session, itemId, { type, maxWidth })
   );
 
   useEffect(() => {
+    if (skipFetch) {
+      setUrl(null);
+      return;
+    }
     const cached = peekArtworkObjectUrl(session, itemId, { type, maxWidth });
     if (cached) {
       setUrl(cached);
@@ -79,9 +89,9 @@ export const ArtworkImage = memo(function ArtworkImage({
     return () => {
       cancelled = true;
     };
-  }, [session, itemId, type, maxWidth, onColour, skipColourAnalysis]);
+  }, [session, itemId, type, maxWidth, onColour, skipColourAnalysis, skipFetch]);
 
-  if (!url) {
+  if (skipFetch || !url) {
     return (
       <div
         className={

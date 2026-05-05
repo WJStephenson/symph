@@ -19,7 +19,7 @@ export async function fetchRecentArtists(session: JellyfinSession, libraryId: st
     SortBy: "DatePlayed",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   const items = r.Items ?? [];
   if (items.length) return items;
@@ -30,7 +30,7 @@ export async function fetchRecentArtists(session: JellyfinSession, libraryId: st
     SortBy: "DatePlayed",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   return alt.Items ?? [];
 }
@@ -43,7 +43,7 @@ export async function fetchTopArtists(session: JellyfinSession, libraryId: strin
     SortBy: "PlayCount",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   return r.Items ?? [];
 }
@@ -56,7 +56,7 @@ export async function fetchRecentAlbums(session: JellyfinSession, libraryId: str
     SortBy: "DatePlayed",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   return r.Items ?? [];
 }
@@ -69,7 +69,7 @@ export async function fetchRecentTracks(session: JellyfinSession, libraryId: str
     SortBy: "DatePlayed",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   return r.Items ?? [];
 }
@@ -81,7 +81,7 @@ export async function fetchRandomTracks(session: JellyfinSession, libraryId: str
     IncludeItemTypes: "Audio",
     SortBy: "Random",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   const items = r.Items ?? [];
   if (items.length >= 8) return items;
@@ -92,7 +92,7 @@ export async function fetchRandomTracks(session: JellyfinSession, libraryId: str
     SortBy: "DateCreated",
     SortOrder: "Descending",
     Limit: 120,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   const all = pool.Items ?? [];
   const shuffled = [...all].sort(() => Math.random() - 0.5);
@@ -107,7 +107,7 @@ export async function fetchFavouriteAlbums(session: JellyfinSession, libraryId: 
     Filters: "IsFavorite",
     SortBy: "SortName",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData"
+    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
   });
   return r.Items ?? [];
 }

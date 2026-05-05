@@ -1,4 +1,6 @@
 import type { AuthResponse, BaseItemDto, ItemsResponse, JellyfinSession } from "./types";
+import { primaryImageKnownAbsent } from "@/lib/format";
+import { pageIsHttps } from "./urlPolicy";
 
 const CLIENT = "SymphWeb";
 const CLIENT_VERSION = "0.1.0";
@@ -9,6 +11,13 @@ function normaliseServerUrl(url: string): string {
     return `https://${trimmed}`;
   }
   return trimmed;
+}
+
+function mediaApiUrl(session: JellyfinSession, built: URL): string {
+  if (pageIsHttps() && session.serverUrl.startsWith("http://")) {
+    return `${built.pathname}${built.search}`;
+  }
+  return built.toString();
 }
 
 function authHeader(token: string, deviceId?: string): string {
@@ -58,7 +67,7 @@ export function buildHeaders(session: JellyfinSession): HeadersInit {
 export async function fetchUserViews(session: JellyfinSession): Promise<BaseItemDto[]> {
   const url = new URL(`${session.serverUrl}/UserViews`);
   url.searchParams.set("userId", session.userId);
-  const res = await fetch(url.toString(), { headers: buildHeaders(session) });
+  const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) throw new Error("Could not load libraries");
   const data = (await res.json()) as ItemsResponse;
   return data.Items ?? [];
@@ -73,14 +82,14 @@ export async function fetchItems(
     if (v === undefined) continue;
     url.searchParams.set(k, String(v));
   }
-  const res = await fetch(url.toString(), { headers: buildHeaders(session) });
+  const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) throw new Error("Could not load items");
   return (await res.json()) as ItemsResponse;
 }
 
 export async function fetchItem(session: JellyfinSession, itemId: string): Promise<BaseItemDto> {
   const url = new URL(`${session.serverUrl}/Users/${session.userId}/Items/${itemId}`);
-  const res = await fetch(url.toString(), { headers: buildHeaders(session) });
+  const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) throw new Error("Could not load item");
   return (await res.json()) as BaseItemDto;
 }
@@ -108,19 +117,24 @@ export function streamUrl(session: JellyfinSession, itemId: string): string {
     "Container",
     "opus,webm|opus,mp3,aac,m4a|aac,flac|flac,ogg|vorbis,wav|PCM_S16LE"
   );
-  return u.toString();
+  return mediaApiUrl(session, u);
 }
 
 export async function fetchImageBlob(
   session: JellyfinSession,
   itemId: string,
   type: "Primary" | "Backdrop" = "Primary",
-  maxWidth = 720
+  maxWidth = 720,
+  meta?: { item?: BaseItemDto }
 ): Promise<Blob | null> {
+  const dto = meta?.item;
+  if (dto && dto.Id === itemId && primaryImageKnownAbsent(dto)) {
+    return null;
+  }
   const url = new URL(`${session.serverUrl}/Items/${itemId}/Images/${type}`);
   url.searchParams.set("maxWidth", String(maxWidth));
   url.searchParams.set("quality", "90");
-  const res = await fetch(url.toString(), { headers: buildHeaders(session) });
+  const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) return null;
   return res.blob();
 }
@@ -141,14 +155,17 @@ export async function reportPlaybackProgress(
     VolumeLevel: Math.round(payload.volume * 100),
     EventName: "timeupdate"
   };
-  await fetch(`${session.serverUrl}/Sessions/Playing/Progress`, {
-    method: "POST",
-    headers: {
-      ...buildHeaders(session),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(body)
-  }).catch(() => undefined);
+  await fetch(
+    mediaApiUrl(session, new URL(`${session.serverUrl}/Sessions/Playing/Progress`)),
+    {
+      method: "POST",
+      headers: {
+        ...buildHeaders(session),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    }
+  ).catch(() => undefined);
 }
 
 export async function reportPlaybackStarted(
@@ -165,7 +182,7 @@ export async function reportPlaybackStarted(
     PlaylistLength: queueIds.length,
     NowPlayingQueue: queueIds.map((id) => ({ Id: id }))
   };
-  await fetch(`${session.serverUrl}/Sessions/Playing`, {
+  await fetch(mediaApiUrl(session, new URL(`${session.serverUrl}/Sessions/Playing`)), {
     method: "POST",
     headers: {
       ...buildHeaders(session),
@@ -184,7 +201,7 @@ export async function reportPlaybackStopped(
     ItemId: itemId,
     PositionTicks: Math.floor(positionTicks)
   };
-  await fetch(`${session.serverUrl}/Sessions/Playing/Stopped`, {
+  await fetch(mediaApiUrl(session, new URL(`${session.serverUrl}/Sessions/Playing/Stopped`)), {
     method: "POST",
     headers: {
       ...buildHeaders(session),

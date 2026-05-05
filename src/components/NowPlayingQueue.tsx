@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { getAudioElement } from "@/audio/PlaybackEngine";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { WaveformSeekBar } from "@/components/WaveformSeekBar";
-import { formatDuration } from "@/lib/format";
+import { formatDuration, queueCoverItem } from "@/lib/format";
 import type { QueueTrack } from "@/state/playerStore";
 import { usePlayerStore } from "@/state/playerStore";
 import type { JellyfinSession } from "@/jellyfin/types";
@@ -68,6 +68,7 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
                     <ArtworkImage
                       session={session}
                       itemId={q.albumId ?? q.id}
+                      item={queueCoverItem(q)}
                       className="size-full object-cover"
                       alt=""
                       maxWidth={96}
@@ -134,6 +135,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <ArtworkImage
             session={session}
             itemId={track.albumId ?? track.id}
+            item={queueCoverItem(track)}
             className="relative z-10 w-full h-full object-cover"
             alt=""
             maxWidth={900}

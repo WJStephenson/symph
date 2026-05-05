@@ -23,6 +23,16 @@ export function artistName(item: BaseItemDto): string {
   return item.AlbumArtist ?? "Unknown artist";
 }
 
+  const tags = item?.ImageTags;
+  return tags != null && !tags.Primary;
+}
+
+export function queueCoverItem(track: QueueTrack): BaseItemDto | undefined {
+  const artworkId = track.albumId ?? track.id;
+  if (track.albumRaw?.Id === artworkId) return track.albumRaw;
+  return undefined;
+}
+
 export function toQueueTrack(item: BaseItemDto, album?: BaseItemDto): QueueTrack {
   return {
     id: item.Id,
@@ -30,6 +40,7 @@ export function toQueueTrack(item: BaseItemDto, album?: BaseItemDto): QueueTrack
     artist: artistName(item),
     albumId: album?.Id ?? item.ParentId,
     albumTitle: album?.Name,
+    albumRaw: album,
     durationTicks: item.RunTimeTicks,
     raw: item
   };

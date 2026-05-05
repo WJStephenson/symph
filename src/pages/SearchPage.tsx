@@ -29,7 +29,7 @@ export function SearchPage() {
             Recursive: true,
             IncludeItemTypes: "MusicAlbum,Audio,MusicArtist",
             Limit: 40,
-            Fields: "PrimaryImageAspectRatio,UserData"
+            Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
           });
           if (!cancelled) setResults(res.Items ?? []);
         } catch {
@@ -67,7 +67,14 @@ export function SearchPage() {
                 className="flex items-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 p-3 hover:border-indigo-400/40 transition"
               >
                 <div className="size-12 rounded-xl overflow-hidden border border-white/10 shrink-0">
-                  <ArtworkImage session={session} itemId={item.Id} className="size-full object-cover" alt="" maxWidth={160} />
+                  <ArtworkImage
+                    session={session}
+                    itemId={item.Id}
+                    item={item}
+                    className="size-full object-cover"
+                    alt=""
+                    maxWidth={160}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white font-medium truncate">{item.Name}</div>
@@ -84,7 +91,14 @@ export function SearchPage() {
                 className="flex items-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 p-3 hover:border-indigo-400/40 transition"
               >
                 <div className="size-12 rounded-xl overflow-hidden border border-white/10 shrink-0">
-                  <ArtworkImage session={session} itemId={item.Id} className="size-full object-cover" alt="" maxWidth={160} />
+                  <ArtworkImage
+                    session={session}
+                    itemId={item.Id}
+                    item={item}
+                    className="size-full object-cover"
+                    alt=""
+                    maxWidth={160}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white font-medium truncate">{item.Name}</div>
@@ -104,6 +118,7 @@ export function SearchPage() {
                   <ArtworkImage
                     session={session}
                     itemId={item.ParentId ?? item.Id}
+                    item={item}
                     className="size-full object-cover"
                     alt=""
                     maxWidth={160}

@@ -7,6 +7,7 @@ export type QueueTrack = {
   artist: string;
   albumId?: string;
   albumTitle?: string;
+  albumRaw?: BaseItemDto;
   durationTicks?: number;
   raw?: BaseItemDto;
 };

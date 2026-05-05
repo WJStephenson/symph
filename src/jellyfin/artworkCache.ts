@@ -1,4 +1,4 @@
-import type { JellyfinSession } from "@/jellyfin/types";
+import type { BaseItemDto, JellyfinSession } from "@/jellyfin/types";
 import { fetchImageBlob } from "@/jellyfin/client";
 
 const MAX_CACHED = 180;
@@ -28,7 +28,7 @@ function touch(key: string): void {
 export function getArtworkObjectUrl(
   session: JellyfinSession,
   itemId: string,
-  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number }
+  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number; item?: BaseItemDto }
 ): Promise<string | null> {
   const type = options?.type ?? "Primary";
   const maxWidth = options?.maxWidth ?? 640;
@@ -41,7 +41,9 @@ export function getArtworkObjectUrl(
   let p = inFlight.get(key);
   if (!p) {
     p = (async () => {
-      const blob = await fetchImageBlob(session, itemId, type, maxWidth);
+      const blob = await fetchImageBlob(session, itemId, type, maxWidth, {
+        item: options?.item
+      });
       if (!blob) return null;
       const url = URL.createObjectURL(blob);
       resolved.set(key, url);
@@ -58,7 +60,7 @@ export function getArtworkObjectUrl(
 export function peekArtworkObjectUrl(
   session: JellyfinSession,
   itemId: string,
-  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number }
+  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number; item?: BaseItemDto }
 ): string | null {
   const type = options?.type ?? "Primary";
   const maxWidth = options?.maxWidth ?? 640;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   addTracksToPlaylist,
   createPlaylist,
@@ -55,6 +56,10 @@ export function AddToPlaylistModal({
 
   if (!open) return null;
 
+  const root =
+    typeof document !== "undefined" ? document.body : null;
+  if (!root) return null;
+
   const addTo = async (playlistId: string) => {
     setBusy(true);
     setError(null);
@@ -84,8 +89,8 @@ export function AddToPlaylistModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close"
@@ -93,7 +98,7 @@ export function AddToPlaylistModal({
         onClick={onClose}
       />
       <div
-        className="relative w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900 shadow-2xl max-h-[min(85vh,520px)] flex flex-col"
+        className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900 shadow-2xl max-h-[min(85vh,520px)] flex flex-col"
         style={{ paddingBottom: "var(--safe-bottom)" }}
       >
         <div className="shrink-0 px-5 pt-5 pb-3 border-b border-white/10">
@@ -156,7 +161,8 @@ export function AddToPlaylistModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    root
   );
 }
 

@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
-import { queueCoverItem } from "@/lib/format";
+import { getAudioElement } from "@/audio/audioRef";
 import { accentTheme } from "@/lib/accentTheme";
+import { queueCoverItem } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
+import { VolumePopoverButton } from "@/components/VolumePopoverButton";
 import { ArtworkImage } from "./ArtworkImage";
-import { getAudioElement } from "@/audio/audioRef";
 
 type Props = {
   onExpand: () => void;
@@ -79,6 +80,7 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
               <IconButton label="Next" onClick={() => next()}>
                 <NextIcon />
               </IconButton>
+              <VolumePopoverButton theme={theme} variant="mini" />
             </div>
           </div>
         </div>

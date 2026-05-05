@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { accentTheme } from "@/lib/accentTheme";
@@ -110,9 +110,14 @@ export function ShellLayout() {
         </button>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
           <SideLink to="/" label="Home" icon={HomeIcon} />
-          <SideLink to="/libraries" label="Browse library" icon={LibraryIcon} />
+          <SideLink
+            to="/libraries"
+            label="Browse library"
+            icon={LibraryIcon}
+            isActiveOverride={(p) => p === "/libraries" || p.startsWith("/library/")}
+          />
           <SideLink to="/search" label="Search" icon={SearchIcon} />
-          <SideLink to="/playlists" label="Playlists" icon={PlaylistIcon} />
+          <SideLink to="/playlists" label="Playlists" icon={PlaylistIcon} isActiveOverride={(p) => p.startsWith("/playlists")} />
           <SideLink to="/settings" label="Settings" icon={SettingsIcon} />
         </div>
         <div className="flex-1" />
@@ -134,6 +139,7 @@ function Tab({
   return (
     <NavLink
       to={to}
+      end={to === "/"}
       className={({ isActive }) =>
         `flex flex-col items-center gap-1 px-4 py-1 rounded-xl text-[11px] symph-tone-transition ${
           isActive ? "text-white" : "text-zinc-500"
@@ -152,33 +158,44 @@ function Tab({
 function SideLink({
   to,
   label,
-  icon: Icon
+  icon: Icon,
+  isActiveOverride
 }: {
   to: string;
   label: string;
   icon: () => ReactElement;
+  isActiveOverride?: (pathname: string) => boolean;
 }) {
+  const { pathname } = useLocation();
   return (
     <NavLink
       to={to}
+      end={to === "/"}
       title={label}
-      className={({ isActive }) =>
-        `flex items-center gap-3 rounded-xl text-sm symph-tone-transition overflow-hidden ${
-          isActive
-            ? "bg-white/10 text-white border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))] py-2 pl-2 pr-3"
-            : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent py-2 pl-2 pr-3"
-        }`
-      }
-      style={({ isActive }) =>
-        isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
-      }
+      className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/20"
     >
-      <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 text-current">
-        <Icon />
-      </span>
-      <span className="whitespace-nowrap truncate min-w-0 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-[11rem] md:group-hover/sidebar:opacity-100 transition-[max-width,opacity] duration-300 ease-out">
-        {label}
-      </span>
+      {({ isActive: navActive }) => {
+        const isActive = isActiveOverride ? isActiveOverride(pathname) : navActive;
+        return (
+          <span
+            className={`flex items-center gap-3 rounded-xl text-sm symph-tone-transition overflow-hidden py-2 pl-2 pr-3 border ${
+              isActive
+                ? "bg-white/10 text-white border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))]"
+                : "text-zinc-400 hover:text-white hover:bg-white/5 border-transparent"
+            }`}
+            style={
+              isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
+            }
+          >
+            <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 text-current">
+              <Icon />
+            </span>
+            <span className="whitespace-nowrap truncate min-w-0 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-[11rem] md:group-hover/sidebar:opacity-100 transition-[max-width,opacity] duration-300 ease-out">
+              {label}
+            </span>
+          </span>
+        );
+      }}
     </NavLink>
   );
 }

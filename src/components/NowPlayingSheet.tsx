@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
+import { accentTheme } from "@/lib/accentTheme";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
@@ -11,6 +12,8 @@ type Props = {
 
 export function NowPlayingSheet({ open, onClose }: Props) {
   const session = useServerStore((s) => s.session);
+  const accent = usePlayerStore((s) => s.accent);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const { queue, index } = usePlayerStore(
     useShallow((s) => ({
       queue: s.queue,
@@ -37,7 +40,8 @@ export function NowPlayingSheet({ open, onClose }: Props) {
       <button
         type="button"
         aria-label="Close player"
-        className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+        className="absolute inset-0 backdrop-blur-[2px]"
+        style={{ backgroundColor: theme.sheetBackdrop }}
         onClick={onClose}
       />
       <div

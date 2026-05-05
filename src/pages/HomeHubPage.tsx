@@ -12,6 +12,7 @@ import {
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
+import { accentTheme } from "@/lib/accentTheme";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
@@ -36,6 +37,8 @@ export function HomeHubPage() {
   const session = useServerStore((s) => s.session);
   const libraryId = useServerStore((s) => s.preferredMusicLibraryId);
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const accent = usePlayerStore((s) => s.accent);
+  const mixTheme = useMemo(() => accentTheme(accent), [accent]);
   const [hub, setHub] = useState<HubState>(emptyHub);
   const [loading, setLoading] = useState(true);
   const [mixBusy, setMixBusy] = useState(false);
@@ -160,14 +163,21 @@ export function HomeHubPage() {
           type="button"
           onClick={() => void playRandomMix()}
           disabled={mixBusy || loading}
-          className="rounded-3xl border border-indigo-400/30 bg-gradient-to-br from-indigo-950/80 to-zinc-950 p-6 text-left hover:border-indigo-400/50 transition disabled:opacity-50"
+          className="rounded-3xl border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))] hover:border-[color:var(--symph-accent-border-hover,rgba(129,140,248,0.42))] p-6 text-left transition disabled:opacity-50"
+          style={{
+            background: mixTheme.mixCardBg
+          }}
         >
-          <div className="text-xs uppercase tracking-widest text-indigo-300/90">Mix</div>
+          <div className="text-xs uppercase tracking-widest" style={{ color: mixTheme.mixCardLabel }}>
+            Mix
+          </div>
           <div className="font-display text-2xl text-white mt-2">Random mix</div>
           <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
             Shuffle a fresh set of tracks from your library.
           </p>
-          <div className="mt-4 text-sm text-indigo-200">{mixBusy ? "Building…" : "Play now →"}</div>
+          <div className="mt-4 text-sm" style={{ color: mixTheme.mixCardCta }}>
+            {mixBusy ? "Building…" : "Play now →"}
+          </div>
         </button>
         <Link
           to="/search"
@@ -202,7 +212,7 @@ export function HomeHubPage() {
                 to={`/library/${item.Id}`}
                 className="shrink-0 w-28 flex flex-col items-center gap-2 group"
               >
-                <div className="size-24 rounded-full overflow-hidden border border-white/10 ring-2 ring-transparent group-hover:ring-indigo-400/40 transition">
+                <div className="size-24 rounded-full overflow-hidden border border-white/10 ring-2 ring-transparent group-hover:ring-[color:var(--symph-accent-border,rgba(129,140,248,0.42))] transition">
                   <ArtworkImage
                     session={session}
                     itemId={item.Id}

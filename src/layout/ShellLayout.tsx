@@ -1,9 +1,10 @@
-import type { ReactElement } from "react";
-import { useState } from "react";
+import type { CSSProperties, ReactElement } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { MiniPlayerBar } from "@/components/MiniPlayerBar";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
+import { accentTheme } from "@/lib/accentTheme";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
@@ -17,6 +18,8 @@ export function ShellLayout() {
   const session = useServerStore((s) => s.session);
   const navigate = useNavigate();
   const queueLen = usePlayerStore((s) => s.queue.length);
+  const accent = usePlayerStore((s) => s.accent);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   if (!session) {
@@ -26,9 +29,23 @@ export function ShellLayout() {
   const showPlayer = queueLen > 0;
 
   return (
-    <div className="min-h-full md:pl-64">
+    <div
+      className="relative min-h-full md:pl-64"
+      style={
+        {
+          ["--symph-accent"]: theme.fill,
+          ["--symph-accent-border"]: theme.softBorder,
+          ["--symph-accent-border-hover"]: theme.softBorderHover
+        } as CSSProperties
+      }
+    >
       <div
-        className="min-h-full flex flex-col pb-[calc(5.5rem+var(--safe-bottom))] md:pb-[calc(4.5rem+var(--safe-bottom))]"
+        className="pointer-events-none fixed inset-0 z-0 md:left-64"
+        style={{ background: theme.bottomGradient }}
+        aria-hidden
+      />
+      <div
+        className="relative z-[1] min-h-full flex flex-col pb-[calc(5.5rem+var(--safe-bottom))] md:pb-[calc(4.5rem+var(--safe-bottom))]"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <main className="flex-1 px-4 md:px-8 max-w-6xl mx-auto w-full pb-6">
@@ -85,6 +102,9 @@ function Tab({
           isActive ? "text-white" : "text-zinc-500"
         }`
       }
+      style={({ isActive }) =>
+        isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
+      }
     >
       <Icon />
       {label}
@@ -98,8 +118,13 @@ function SideLink({ to, label }: { to: string; label: string }) {
       to={to}
       className={({ isActive }) =>
         `px-3 py-2 rounded-xl text-sm ${
-          isActive ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white hover:bg-white/5"
+          isActive
+            ? "bg-white/10 text-white border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))]"
+            : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
         }`
+      }
+      style={({ isActive }) =>
+        isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
       }
     >
       {label}

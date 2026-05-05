@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { queueCoverItem } from "@/lib/format";
+import { accentTheme } from "@/lib/accentTheme";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 import { ArtworkImage } from "./ArtworkImage";
@@ -17,6 +19,8 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
+  const accent = usePlayerStore((s) => s.accent);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
   const track = queue[index];
@@ -28,9 +32,12 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
   return (
     <div className={className}>
       <div className="max-w-6xl mx-auto">
-        <div className="glass rounded-2xl shadow-glow shadow-indigo-500/20 overflow-hidden">
-          <div className="h-[3px] bg-white/10">
-            <div className="h-full bg-indigo-400/90" style={{ width: `${pct}%` }} />
+        <div
+          className="glass rounded-2xl overflow-hidden border border-white/10"
+          style={{ boxShadow: theme.miniShadow }}
+        >
+          <div className="h-[3px]" style={{ backgroundColor: theme.progressTrack }}>
+            <div className="h-full" style={{ width: `${pct}%`, backgroundColor: theme.progress }} />
           </div>
           <div className="flex items-center gap-3 p-2.5">
             <button

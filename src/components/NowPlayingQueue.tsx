@@ -1,9 +1,10 @@
-import { memo, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { getAudioElement } from "@/audio/audioRef";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { WaveLineSeekBar } from "@/components/WaveLineSeekBar";
+import { accentTheme } from "@/lib/accentTheme";
 import { formatDuration, queueCoverItem } from "@/lib/format";
 import type { QueueTrack } from "@/state/playerStore";
 import { usePlayerStore } from "@/state/playerStore";
@@ -21,6 +22,8 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
   activeIndex
 }: Props) {
   const playIndex = usePlayerStore((s) => s.playIndex);
+  const accent = usePlayerStore((s) => s.accent);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: queue.length,
@@ -70,6 +73,11 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
                       className={`flex items-stretch gap-1 rounded-xl ${
                         isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
                       }`}
+                      style={
+                        isActive
+                          ? { boxShadow: `inset 3px 0 0 ${theme.fill}` }
+                          : undefined
+                      }
                     >
                       <button
                         type="button"
@@ -118,6 +126,7 @@ type LeftProps = {
 
 export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track }: LeftProps) {
   const accent = usePlayerStore((s) => s.accent);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -170,7 +179,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <span>{formatDuration(durationSec)}</span>
         </div>
         <div className="flex items-center justify-center gap-5 lg:gap-6 pt-1">
-          <GhostIconButton active={shuffle} label="Shuffle" onClick={() => toggleShuffle()}>
+          <GhostIconButton active={shuffle} label="Shuffle" theme={theme} onClick={() => toggleShuffle()}>
             <ShuffleIcon />
           </GhostIconButton>
           <IconCircle label="Previous" onClick={() => prev()}>
@@ -191,7 +200,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <IconCircle label="Next" onClick={() => next()}>
             <NextIcon />
           </IconCircle>
-          <GhostIconButton active={repeat !== "off"} label="Repeat" onClick={() => cycleRepeat()}>
+          <GhostIconButton active={repeat !== "off"} label="Repeat" theme={theme} onClick={() => cycleRepeat()}>
             <RepeatIcon mode={repeat} />
           </GhostIconButton>
         </div>
@@ -211,7 +220,8 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
             step={0.01}
             value={muted ? 0 : volume}
             onChange={(e) => setVolume(Number(e.target.value))}
-            className="flex-1 accent-indigo-400 min-w-0"
+            className="flex-1 min-w-0 h-2 accent-transparent"
+            style={{ accentColor: theme.fill }}
           />
         </div>
       </div>
@@ -248,12 +258,14 @@ function GhostIconButton({
   children,
   onClick,
   label,
-  active
+  active,
+  theme
 }: {
   children: ReactNode;
   onClick: () => void;
   label: string;
   active?: boolean;
+  theme: ReturnType<typeof accentTheme>;
 }) {
   return (
     <button
@@ -261,8 +273,13 @@ function GhostIconButton({
       aria-label={label}
       onClick={onClick}
       className={`size-10 inline-flex items-center justify-center rounded-full ${
-        active ? "text-indigo-300 bg-indigo-500/15" : "text-zinc-400 hover:text-white"
+        active ? "" : "text-zinc-400 hover:text-white"
       }`}
+      style={
+        active
+          ? { backgroundColor: theme.ghostActiveBg, color: theme.ghostActiveText }
+          : undefined
+      }
     >
       {children}
     </button>

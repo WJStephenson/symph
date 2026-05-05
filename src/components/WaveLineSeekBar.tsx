@@ -199,8 +199,8 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
         />
       </svg>
       <div
-        className="pointer-events-none absolute top-1/2 z-10 size-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-white/95 shadow-md"
-        style={{ left: `${handleLeftPct}%` }}
+        className="pointer-events-none absolute top-0 bottom-0 z-10 -translate-x-1/2 bg-white/95"
+        style={{ left: `${handleLeftPct}%`, width: 4 }}
         aria-hidden
       />
     </div>

@@ -2,14 +2,16 @@ import { useId, memo, useCallback, useEffect, useMemo, useRef, useState } from "
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 
-const DEFAULT_HEIGHT = 16;
+const DEFAULT_BAR_HEIGHT = 16;
+const WAVE_VIEW_HEIGHT = 12;
+
 const PATTERN_W = 72;
 
-function buildTiledSinePath(totalW: number, height: number): string {
-  const mid = height * 0.5;
+function buildTiledSinePath(totalW: number, waveH: number): string {
+  const mid = waveH * 0.5;
   if (totalW <= 0) return `M 0 ${mid} L 0 ${mid}`;
   const k = (Math.PI * 2) / PATTERN_W;
-  const amp = Math.min(height * 0.42, 6.5);
+  const amp = Math.min(waveH * 0.42, 5.5);
   const step = 2;
   const y0 = mid + amp * Math.sin(0);
   let d = `M 0 ${y0.toFixed(3)}`;
@@ -29,7 +31,7 @@ type Props = {
 export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   onSeek,
   accent,
-  height = DEFAULT_HEIGHT
+  height: barHeight = DEFAULT_BAR_HEIGHT
 }: Props) {
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
@@ -46,6 +48,9 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   const ampRef = useRef(0);
   const rafRef = useRef(0);
 
+  const waveTop = Math.max(0, (barHeight - WAVE_VIEW_HEIGHT) * 0.5);
+  const waveMid = WAVE_VIEW_HEIGHT * 0.5;
+
   useEffect(() => {
     if (!dragging) setLocal(positionSec);
   }, [positionSec, dragging]);
@@ -56,8 +61,8 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
     const w = svgWidth;
     const extra = PATTERN_W * 4;
     const totalW = Math.max(w + extra, PATTERN_W * 6);
-    return buildTiledSinePath(totalW, height);
-  }, [svgWidth, height]);
+    return buildTiledSinePath(totalW, WAVE_VIEW_HEIGHT);
+  }, [svgWidth]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -104,15 +109,15 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
     [svgWidth]
   );
 
+  const waveTransformStr = useCallback(
+    (tx: number, sy: number) =>
+      `translate(0 ${waveTop}) translate(0 ${waveMid}) scale(1 ${sy}) translate(0 ${-waveMid}) translate(${tx.toFixed(2)} 0)`,
+    [waveTop, waveMid]
+  );
+
   useEffect(() => {
-    const mid = height * 0.5;
     let last = performance.now();
     let mounted = true;
-    const waveTransform = (tx: number, sy: number) => {
-      const t = `translate(0 ${mid}) scale(1 ${sy}) translate(0 ${-mid}) translate(${tx.toFixed(2)} 0)`;
-      baseWaveRef.current?.setAttribute("transform", t);
-      playedWaveRef.current?.setAttribute("transform", t);
-    };
     const tick = (tFrame: number) => {
       if (!mounted) return;
       const dt = Math.min(0.05, (tFrame - last) / 1000);
@@ -126,7 +131,9 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       }
       const sy = Math.max(0.04, ampRef.current);
       const tx = -(scrollRef.current % PATTERN_W);
-      waveTransform(tx, sy);
+      const t = waveTransformStr(tx, sy);
+      baseWaveRef.current?.setAttribute("transform", t);
+      playedWaveRef.current?.setAttribute("transform", t);
 
       const dur = durationSec;
       let pos = local;
@@ -148,20 +155,19 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       mounted = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [isPlaying, height, dragging, local, durationSec, paintClipAndHandle]);
+  }, [isPlaying, dragging, local, durationSec, paintClipAndHandle, waveTransformStr]);
 
   useEffect(() => {
     if (isPlaying || dragging) return;
     const dur = durationSec;
     const frac = dur > 0 ? Math.min(1, Math.max(0, local / dur)) : 0;
     paintClipAndHandle(frac);
-    const mid = height * 0.5;
     const sy = Math.max(0.04, ampRef.current);
     const tx = -(scrollRef.current % PATTERN_W);
-    const t = `translate(0 ${mid}) scale(1 ${sy}) translate(0 ${-mid}) translate(${tx.toFixed(2)} 0)`;
+    const t = waveTransformStr(tx, sy);
     baseWaveRef.current?.setAttribute("transform", t);
     playedWaveRef.current?.setAttribute("transform", t);
-  }, [svgWidth, isPlaying, dragging, local, durationSec, height, paintClipAndHandle]);
+  }, [svgWidth, isPlaying, dragging, local, durationSec, paintClipAndHandle, waveTransformStr]);
 
   const playedFrac = durationSec > 0 ? Math.min(1, Math.max(0, local / durationSec)) : 0;
   const clipW = svgWidth * playedFrac;
@@ -174,7 +180,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
     <div
       ref={wrapRef}
       className="relative w-full rounded-2xl bg-black/40 touch-none select-none cursor-pointer overflow-visible"
-      style={{ height }}
+      style={{ height: barHeight }}
       onPointerDown={(e) => {
         setDragging(true);
         setFromClientX(e.clientX);
@@ -184,13 +190,13 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       <svg
         className="absolute inset-0 w-full"
         width="100%"
-        height={height}
-        viewBox={`0 0 ${svgWidth} ${height}`}
+        height={barHeight}
+        viewBox={`0 0 ${svgWidth} ${barHeight}`}
         preserveAspectRatio="none"
       >
         <defs>
           <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-            <rect ref={clipRectRef} x={0} y={0} width={clipW} height={height} />
+            <rect ref={clipRectRef} x={0} y={0} width={clipW} height={barHeight} />
           </clipPath>
         </defs>
         <g ref={baseWaveRef}>
@@ -201,6 +207,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
             strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
+            vectorEffect="nonScalingStroke"
           />
         </g>
         <g clipPath={`url(#${clipId})`}>
@@ -212,6 +219,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
+              vectorEffect="nonScalingStroke"
             />
           </g>
         </g>
@@ -219,7 +227,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       <div
         ref={handleRef}
         className="pointer-events-none absolute top-0 bottom-0 z-10 -translate-x-1/2 bg-white/95"
-        style={{ left: `${playedFrac * 100}%`, width: 4 }}
+        style={{ left: `${playedFrac * 100}%`, width: 4, height: barHeight }}
         aria-hidden
       />
     </div>

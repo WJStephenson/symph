@@ -1,8 +1,7 @@
 import { useEffect, type ReactNode } from "react";
-import { WaveformBar } from "@/audio/WaveformBar";
 import { getAudioElement } from "@/audio/PlaybackEngine";
 import { ArtworkImage } from "@/components/ArtworkImage";
-import { SeekBar } from "@/components/SeekBar";
+import { WaveformSeekBar } from "@/components/WaveformSeekBar";
 import { formatDuration } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
@@ -24,6 +23,7 @@ export function NowPlayingSheet({ open, onClose }: Props) {
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
   const accent = usePlayerStore((s) => s.accent);
+  const waveformPeaks = usePlayerStore((s) => s.waveformPeaks);
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
@@ -46,51 +46,53 @@ export function NowPlayingSheet({ open, onClose }: Props) {
   if (!open || !session || !track) return null;
 
   return (
-    <div className="fixed inset-0 z-[60]">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-zinc-950">
       <button
         type="button"
         aria-label="Close player"
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
         onClick={onClose}
       />
       <div
-        className="absolute inset-x-0 bottom-0 top-[8vh] md:top-[10vh] md:left-1/2 md:-translate-x-1/2 md:w-[min(560px,92vw)] md:rounded-t-3xl overflow-hidden border-t md:border border-white/10 glass rounded-t-3xl flex flex-col"
-        style={{ paddingBottom: "var(--safe-bottom)" }}
+        className="relative z-10 flex flex-col flex-1 min-h-0 m-0 lg:m-3 lg:rounded-2xl lg:border lg:border-white/10 lg:overflow-hidden lg:shadow-2xl"
+        style={{ paddingBottom: "var(--safe-bottom)", paddingTop: "var(--safe-top)" }}
       >
-        <div className="flex items-center justify-between px-4 pt-3">
+        <header className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-zinc-950/95">
           <button type="button" className="text-sm text-zinc-400 hover:text-white" onClick={onClose}>
-            Down
+            Close
           </button>
           <div className="text-xs uppercase tracking-widest text-zinc-500">Now playing</div>
-          <div className="w-12" />
-        </div>
-        <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-6">
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="relative mx-auto w-full max-w-sm aspect-square rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10">
-              <div
-                className="absolute inset-0 opacity-40 blur-3xl scale-110"
-                style={{
-                  background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
-                }}
-              />
-              <ArtworkImage
-                session={session}
-                itemId={track.albumId ?? track.id}
-                className="relative z-10 w-full h-full object-cover"
-                alt=""
-                maxWidth={900}
-              />
-            </div>
-            <div className="space-y-4">
+          <div className="w-14" />
+        </header>
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-zinc-950/98">
+          <aside className="shrink-0 lg:w-[min(100%,420px)] xl:w-[440px] lg:max-w-[42vw] border-b lg:border-b-0 lg:border-r border-white/10 overflow-y-auto no-scrollbar">
+            <div className="p-5 lg:p-8 space-y-5 max-w-md mx-auto lg:mx-0 lg:max-w-none">
+              <div className="relative mx-auto w-full max-w-[280px] lg:max-w-none aspect-square rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10">
+                <div
+                  className="absolute inset-0 opacity-35 blur-3xl scale-110"
+                  style={{
+                    background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
+                  }}
+                />
+                <ArtworkImage
+                  session={session}
+                  itemId={track.albumId ?? track.id}
+                  className="relative z-10 w-full h-full object-cover"
+                  alt=""
+                  maxWidth={900}
+                />
+              </div>
               <div>
-                <h1 className="font-display text-2xl md:text-3xl text-white leading-tight">{track.title}</h1>
+                <h1 className="font-display text-2xl lg:text-3xl text-white leading-tight">{track.title}</h1>
                 <p className="text-zinc-400 mt-1">{track.artist}</p>
                 {track.albumTitle && <p className="text-sm text-zinc-500 mt-1">{track.albumTitle}</p>}
               </div>
-              <WaveformBar accent={accent} height={112} />
-              <SeekBar
+              <WaveformSeekBar
+                peaks={waveformPeaks}
                 duration={durationSec}
                 position={positionSec}
+                accent={accent}
+                height={96}
                 onSeek={(sec) => {
                   const el = getAudioElement();
                   if (!el) return;
@@ -101,7 +103,7 @@ export function NowPlayingSheet({ open, onClose }: Props) {
                 <span>{formatDuration(positionSec)}</span>
                 <span>{formatDuration(durationSec)}</span>
               </div>
-              <div className="flex items-center justify-center gap-6 pt-1">
+              <div className="flex items-center justify-center gap-5 lg:gap-6 pt-1">
                 <GhostIconButton active={shuffle} label="Shuffle" onClick={() => toggleShuffle()}>
                   <ShuffleIcon />
                 </GhostIconButton>
@@ -127,10 +129,10 @@ export function NowPlayingSheet({ open, onClose }: Props) {
                   <RepeatIcon mode={repeat} />
                 </GhostIconButton>
               </div>
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-1 pb-2 lg:pb-0">
                 <button
                   type="button"
-                  className="text-zinc-400 hover:text-white"
+                  className="text-zinc-400 hover:text-white shrink-0"
                   onClick={() => toggleMute()}
                   aria-label="Mute"
                 >
@@ -143,37 +145,51 @@ export function NowPlayingSheet({ open, onClose }: Props) {
                   step={0.01}
                   value={muted ? 0 : volume}
                   onChange={(e) => setVolume(Number(e.target.value))}
-                  className="flex-1 accent-indigo-400"
+                  className="flex-1 accent-indigo-400 min-w-0"
                 />
               </div>
             </div>
-          </div>
-          <div className="mt-8">
-            <div className="text-sm text-zinc-500 mb-2">Queue</div>
-            <div className="rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden">
-              {queue.map((q, i) => (
-                <button
-                  key={q.id}
-                  type="button"
-                  onClick={() => playIndex(i)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 ${
-                    i === index ? "bg-white/5" : ""
-                  }`}
-                >
-                  <div className="text-xs text-zinc-500 w-6 tabular-nums">{i + 1}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm text-white truncate">{q.title}</div>
-                    <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
-                  </div>
-                  {q.durationTicks !== undefined && (
-                    <div className="text-xs text-zinc-500 tabular-nums">
-                      {formatDuration(q.durationTicks / 10_000_000)}
-                    </div>
-                  )}
-                </button>
-              ))}
+          </aside>
+          <section className="flex-1 min-h-0 flex flex-col min-w-0 bg-black/20">
+            <div className="shrink-0 px-4 py-3 border-b border-white/10">
+              <h2 className="text-sm font-medium text-white">Queue</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</p>
             </div>
-          </div>
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+              <div className="divide-y divide-white/5">
+                {queue.map((q, i) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => playIndex(i)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition ${
+                      i === index ? "bg-white/[0.07]" : ""
+                    }`}
+                  >
+                    <div className="text-xs text-zinc-500 w-7 tabular-nums shrink-0">{i + 1}</div>
+                    <div className="size-10 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                      <ArtworkImage
+                        session={session}
+                        itemId={q.albumId ?? q.id}
+                        className="size-full object-cover"
+                        alt=""
+                        maxWidth={120}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-white truncate">{q.title}</div>
+                      <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
+                    </div>
+                    {q.durationTicks !== undefined && (
+                      <div className="text-xs text-zinc-500 tabular-nums shrink-0">
+                        {formatDuration(q.durationTicks / 10_000_000)}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

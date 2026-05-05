@@ -19,7 +19,7 @@ export function WelcomePage() {
     try {
       const session = await authenticate(server, username, password);
       setSession(session);
-      navigate("/libraries", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not connect");
     } finally {

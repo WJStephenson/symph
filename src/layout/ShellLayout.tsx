@@ -8,7 +8,7 @@ import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 const tabs = [
-  { to: "/libraries", label: "Home", icon: HomeIcon },
+  { to: "/", label: "Home", icon: HomeIcon },
   { to: "/search", label: "Search", icon: SearchIcon },
   { to: "/settings", label: "More", icon: MoreIcon }
 ];
@@ -49,12 +49,13 @@ export function ShellLayout() {
         </div>
       </nav>
       <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] z-30">
-        <button type="button" onClick={() => navigate("/libraries")} className="mx-4 mt-4 mb-6 text-left">
+        <button type="button" onClick={() => navigate("/")} className="mx-4 mt-4 mb-6 text-left">
           <div className="font-display text-xl tracking-tight text-white">Symph</div>
           <div className="text-xs text-zinc-500">Jellyfin music</div>
         </button>
         <div className="flex flex-col gap-1 px-3">
-          <SideLink to="/libraries" label="Libraries" />
+          <SideLink to="/" label="Home" />
+          <SideLink to="/libraries" label="Browse library" />
           <SideLink to="/search" label="Search" />
           <SideLink to="/settings" label="Settings" />
         </div>

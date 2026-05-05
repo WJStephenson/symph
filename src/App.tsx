@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ShellLayout } from "./layout/ShellLayout";
 import { WelcomePage } from "./pages/WelcomePage";
+import { HomeHubPage } from "./pages/HomeHubPage";
 import { LibrariesPage } from "./pages/LibrariesPage";
 import { LibraryBrowsePage } from "./pages/LibraryBrowsePage";
 import { AlbumPage } from "./pages/AlbumPage";
@@ -17,9 +18,7 @@ function App() {
       <Route element={<ShellLayout />}>
         <Route
           path="/"
-          element={
-            connected ? <Navigate to="/libraries" replace /> : <Navigate to="/welcome" replace />
-          }
+          element={connected ? <HomeHubPage /> : <Navigate to="/welcome" replace />}
         />
         <Route path="/libraries" element={<LibrariesPage />} />
         <Route path="/library/:parentId" element={<LibraryBrowsePage />} />

@@ -45,6 +45,12 @@ function randomIndex(length: number, avoid: number): number {
   return n;
 }
 
+function playAfterNavigation(): void {
+  queueMicrotask(() => {
+    void getRegisteredAudioElement()?.play();
+  });
+}
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   queue: [],
   index: 0,
@@ -69,27 +75,29 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (!queue.length) return;
     const next = ((i % queue.length) + queue.length) % queue.length;
     set({ index: next, positionSec: 0 });
-    queueMicrotask(() => {
-      void getRegisteredAudioElement()?.play();
-    });
+    playAfterNavigation();
   },
   next: () => {
     const { queue, index, repeat, shuffle } = get();
     if (!queue.length) return;
     if (repeat === "one") {
       set({ positionSec: 0 });
+      playAfterNavigation();
       return;
     }
     if (shuffle) {
       set({ index: randomIndex(queue.length, index), positionSec: 0 });
+      playAfterNavigation();
       return;
     }
     if (index < queue.length - 1) {
       set({ index: index + 1, positionSec: 0 });
+      playAfterNavigation();
       return;
     }
     if (repeat === "all") {
       set({ index: 0, positionSec: 0 });
+      playAfterNavigation();
       return;
     }
     set({ isPlaying: false, positionSec: 0 });
@@ -99,10 +107,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (!queue.length) return;
     if (positionSec > 3) {
       set({ positionSec: 0 });
+      playAfterNavigation();
       return;
     }
-    if (index > 0) set({ index: index - 1, positionSec: 0 });
-    else set({ index: queue.length - 1, positionSec: 0 });
+    if (index > 0) {
+      set({ index: index - 1, positionSec: 0 });
+      playAfterNavigation();
+    } else {
+      set({ index: queue.length - 1, positionSec: 0 });
+      playAfterNavigation();
+    }
   },
   toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
   cycleRepeat: () =>

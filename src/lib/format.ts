@@ -23,8 +23,9 @@ export function artistName(item: BaseItemDto): string {
   return item.AlbumArtist ?? "Unknown artist";
 }
 
-  const tags = item?.ImageTags;
-  return tags != null && !tags.Primary;
+export function primaryImageKnownAbsent(item: BaseItemDto): boolean {
+  const tags = item.ImageTags;
+  return tags != null && tags.Primary === undefined;
 }
 
 export function queueCoverItem(track: QueueTrack): BaseItemDto | undefined {

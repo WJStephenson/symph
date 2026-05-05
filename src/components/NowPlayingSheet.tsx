@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
@@ -31,6 +31,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
 
+  const [queueAccordionOpen, setQueueAccordionOpen] = useState(false);
+
   const track = queue[index];
   const queueKey = useMemo(() => queue.map((q) => q.id).join("\0"), [queue]);
 
@@ -52,6 +54,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) setQueueAccordionOpen(false);
+  }, [open]);
+
   if (!session || !track) return null;
 
   return (
@@ -71,18 +77,45 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         style={{ boxShadow: theme.miniShadow }}
       >
         {open && (
-          <div className="flex-1 min-h-0 flex flex-col border-b border-white/10 bg-black/25">
-            <VirtualizedQueue
-              key={queueKey}
-              session={session}
-              queue={queue}
-              activeIndex={index}
-              dense
-            />
-          </div>
+          <>
+            <div className="md:hidden shrink-0 border-b border-white/10 bg-black/20">
+              <button
+                type="button"
+                onClick={() => setQueueAccordionOpen((v) => !v)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+                aria-expanded={queueAccordionOpen}
+              >
+                <div>
+                  <div className="text-sm font-medium text-white">Queue</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</div>
+                </div>
+                <span className="text-zinc-400 text-xs tabular-nums">{queueAccordionOpen ? "▲" : "▼"}</span>
+              </button>
+              {queueAccordionOpen && (
+                <div className="max-h-[min(52vh,420px)] min-h-0 flex flex-col border-t border-white/5">
+                  <VirtualizedQueue
+                    key={queueKey}
+                    session={session}
+                    queue={queue}
+                    activeIndex={index}
+                    dense
+                  />
+                </div>
+              )}
+            </div>
+            <div className="hidden md:flex flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
+              <VirtualizedQueue
+                key={`${queueKey}-desktop`}
+                session={session}
+                queue={queue}
+                activeIndex={index}
+                dense
+              />
+            </div>
+          </>
         )}
         <div
-          className="h-[3px] symph-tone-transition shrink-0"
+          className={`h-[3px] symph-tone-transition shrink-0 ${open ? "max-md:hidden" : ""}`}
           style={{ backgroundColor: theme.progressTrack }}
         >
           <div
@@ -97,6 +130,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               track={track}
               morphTransition
               variant="dockExpanded"
+              hideArtwork={queueAccordionOpen}
             />
           </div>
         ) : null}

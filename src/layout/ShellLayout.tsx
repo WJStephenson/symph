@@ -11,15 +11,28 @@ import { useServerStore } from "@/state/serverStore";
 
 const tabs = [
   { to: "/", label: "Home", icon: HomeIcon },
+  {
+    to: "/libraries",
+    label: "Library",
+    icon: LibraryIcon,
+    isActiveOverride: (p: string) => p === "/libraries" || p.startsWith("/library/")
+  },
   { to: "/search", label: "Search", icon: SearchIcon },
-  { to: "/settings", label: "More", icon: MoreIcon }
-];
+  {
+    to: "/playlists",
+    label: "Lists",
+    icon: PlaylistIcon,
+    isActiveOverride: (p: string) => p.startsWith("/playlists")
+  },
+  { to: "/settings", label: "Settings", icon: SettingsIcon }
+] as const;
 
 const SIDEBAR_COLLAPSED = "4rem";
 
 export function ShellLayout() {
   const session = useServerStore((s) => s.session);
   const navigate = useNavigate();
+  const libraryId = useServerStore((s) => s.preferredMusicLibraryId);
   const queueLen = usePlayerStore((s) => s.queue.length);
   const accent = usePlayerStore((s) => s.accent);
   const theme = useMemo(() => accentTheme(accent), [accent]);
@@ -66,7 +79,7 @@ export function ShellLayout() {
         aria-hidden
       />
       <div
-        className="relative z-[1] min-h-full flex flex-col pb-[calc(5.5rem+var(--safe-bottom))] md:pb-[calc(4.5rem+var(--safe-bottom))]"
+        className="relative z-[1] min-h-full flex flex-col pb-[calc(6rem+var(--safe-bottom))] md:pb-[calc(4.5rem+var(--safe-bottom))]"
         style={{ paddingTop: "var(--safe-top)" }}
       >
         <main className="flex-1 px-4 md:px-8 max-w-6xl mx-auto w-full pb-6">
@@ -93,9 +106,9 @@ export function ShellLayout() {
         />
       )}
       <nav className="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/10 pb-[calc(0.5rem+var(--safe-bottom))] pt-2 md:hidden">
-        <div className="max-w-lg mx-auto flex justify-around items-end">
+        <div className="max-w-lg mx-auto flex justify-between items-end gap-0.5 px-1">
           {tabs.map((t) => (
-            <Tab key={t.to} {...t} />
+            <Tab key={t.to} {...t} libraryId={libraryId} />
           ))}
         </div>
       </nav>
@@ -130,27 +143,34 @@ export function ShellLayout() {
 function Tab({
   to,
   label,
-  icon: Icon
+  icon: Icon,
+  isActiveOverride,
+  libraryId
 }: {
   to: string;
   label: string;
   icon: () => ReactElement;
+  isActiveOverride?: (pathname: string) => boolean;
+  libraryId: string | null;
 }) {
+  const { pathname } = useLocation();
+  const resolvedTo = to === "/libraries" && libraryId ? `/library/${libraryId}` : to;
   return (
-    <NavLink
-      to={to}
-      end={to === "/"}
-      className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-4 py-1 rounded-xl text-[11px] symph-tone-transition ${
-          isActive ? "text-white" : "text-zinc-500"
-        }`
-      }
-      style={({ isActive }) =>
-        isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
-      }
-    >
-      <Icon />
-      {label}
+    <NavLink to={resolvedTo} end={to === "/"}>
+      {({ isActive: navMatch }) => {
+        const active = isActiveOverride ? isActiveOverride(pathname) : navMatch;
+        return (
+          <span
+            className={`flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl text-[10px] leading-tight symph-tone-transition max-w-[4.25rem] ${
+              active ? "text-white" : "text-zinc-500"
+            }`}
+            style={active ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined}
+          >
+            <Icon />
+            <span className="truncate w-full text-center">{label}</span>
+          </span>
+        );
+      }}
     </NavLink>
   );
 }
@@ -248,16 +268,6 @@ function SettingsIcon() {
         d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
         strokeLinecap="round"
       />
-    </svg>
-  );
-}
-
-function MoreIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <circle cx="6" cy="12" r="1.6" fill="currentColor" />
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-      <circle cx="18" cy="12" r="1.6" fill="currentColor" />
     </svg>
   );
 }

@@ -146,13 +146,15 @@ type LeftProps = {
   track: QueueTrack;
   morphTransition?: boolean;
   variant?: "default" | "dockExpanded";
+  hideArtwork?: boolean;
 };
 
 export const PlayerLeftColumn = memo(function PlayerLeftColumn({
   session,
   track,
   morphTransition,
-  variant = "default"
+  variant = "default",
+  hideArtwork
 }: LeftProps) {
   const accent = usePlayerStore((s) => s.accent);
   const theme = useMemo(() => accentTheme(accent), [accent]);
@@ -175,31 +177,33 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({
   const isDock = variant === "dockExpanded";
   const shell = (
     <div className={isDock ? "space-y-3 md:space-y-4 w-full" : "p-5 lg:p-8 space-y-5 max-w-md mx-auto lg:mx-0 lg:max-w-none"}>
-      <div
-        className={`relative mx-auto w-full overflow-hidden shadow-2xl ring-1 ring-white/10 ${
-          isDock
-            ? "max-w-[min(100%,320px)] aspect-square rounded-3xl"
-            : "max-w-[280px] lg:max-w-none aspect-square rounded-[2rem]"
-        }`}
-        style={morphTransition ? { viewTransitionName: "symph-artwork" } : undefined}
-      >
+      {!hideArtwork ? (
         <div
-          className="absolute inset-0 opacity-35 blur-3xl scale-110"
-          style={{
-            background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
-          }}
-        />
-        <ArtworkImage
-          session={session}
-          itemId={track.albumId ?? track.id}
-          item={queueCoverItem(track)}
-          className="relative z-10 w-full h-full object-cover"
-          alt=""
-          maxWidth={isDock ? 640 : 900}
-          priority
-          skipColourAnalysis
-        />
-      </div>
+          className={`relative mx-auto w-full overflow-hidden shadow-2xl ring-1 ring-white/10 ${
+            isDock
+              ? "max-w-[min(100%,320px)] aspect-square rounded-3xl"
+              : "max-w-[280px] lg:max-w-none aspect-square rounded-[2rem]"
+          }`}
+          style={morphTransition ? { viewTransitionName: "symph-artwork" } : undefined}
+        >
+          <div
+            className="absolute inset-0 opacity-35 blur-3xl scale-110"
+            style={{
+              background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
+            }}
+          />
+          <ArtworkImage
+            session={session}
+            itemId={track.albumId ?? track.id}
+            item={queueCoverItem(track)}
+            className="relative z-10 w-full h-full object-cover"
+            alt=""
+            maxWidth={isDock ? 640 : 900}
+            priority
+            skipColourAnalysis
+          />
+        </div>
+      ) : null}
       <div>
         <h1
           className={`font-display text-white leading-tight ${

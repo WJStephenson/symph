@@ -60,7 +60,13 @@ body {
 }
 
 .glass {
-  @apply bg-zinc-900/70 backdrop-blur-xl border border-white/10;
+  @apply bg-zinc-950/[0.88] backdrop-blur-xl border border-white/10;
+}
+
+@media (max-width: 767px) {
+  .glass {
+    @apply bg-zinc-950/[0.94];
+  }
 }
 
 .scrollbar-thin {

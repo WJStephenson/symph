@@ -139,10 +139,10 @@ export function HomeHubPage() {
     <div className="space-y-10 pt-2 md:pt-6 pb-4">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-zinc-500">{greeting}</p>
-          <h1 className="font-display text-3xl md:text-4xl text-white mt-1">Home</h1>
+          <p className="hidden md:block text-sm text-zinc-500">{greeting}</p>
+          <h1 className="font-display text-3xl md:text-4xl text-white md:mt-1">Home</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           <Link
             to={`/library/${libraryId}`}
             className="text-xs uppercase tracking-widest text-zinc-500 hover:text-white transition"
@@ -158,7 +158,27 @@ export function HomeHubPage() {
         </div>
       </header>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="flex md:hidden gap-2">
+        <button
+          type="button"
+          onClick={() => void playRandomMix()}
+          disabled={mixBusy || loading}
+          aria-label="Random mix"
+          className="flex-1 flex items-center justify-center rounded-2xl border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))] bg-zinc-900/60 py-3.5 disabled:opacity-40 active:scale-[0.98] transition"
+          style={{ boxShadow: `0 0 24px -8px ${mixTheme.fill}` }}
+        >
+          <DiceIcon className="text-white" />
+        </button>
+        <Link
+          to="/search"
+          aria-label="Search"
+          className="flex-1 flex items-center justify-center rounded-2xl border border-white/15 bg-zinc-900/50 py-3.5 active:scale-[0.98] transition"
+        >
+          <SearchGlyph className="text-zinc-200" />
+        </Link>
+      </div>
+
+      <section className="hidden md:grid grid-cols-2 gap-4">
         <button
           type="button"
           onClick={() => void playRandomMix()}
@@ -320,6 +340,28 @@ export function HomeHubPage() {
         </>
       )}
     </div>
+  );
+}
+
+function DiceIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65">
+      <rect x="4" y="4" width="16" height="16" rx="3" strokeLinejoin="round" />
+      <circle cx="9" cy="9" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="9" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="15" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="15" r="1.35" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function SearchGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16.5 16.5 4 4" strokeLinecap="round" />
+    </svg>
   );
 }
 

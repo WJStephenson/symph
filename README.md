@@ -12,7 +12,7 @@ Symph is a web client for listening to music from a [Jellyfin](https://jellyfin.
 
 ## Development
 
-Requirements: Node.js (the CI workflow uses Node 22).
+Requirements: Node.js 22.
 
 ```bash
 npm ci
@@ -37,8 +37,7 @@ npm run preview
 
 ## Deployment
 
-- **GitHub Pages** — Pushes to `main` build with `BASE_PATH` set to `/<repository-name>/` so the app resolves assets correctly under GitHub Pages project URLs. Ensure GitHub Pages is enabled for the repository.
-- **Cloudflare Workers (static assets)** — `npm run deploy` runs the build and deploys with Wrangler using the project name `symph` (see `wrangler.jsonc`).
+Host on **Cloudflare Workers** (static assets): connect this repository in the Cloudflare dashboard so pushes to your chosen branch build and deploy automatically, or run `npm run deploy` locally to push with Wrangler using the project name `symph` (see `wrangler.jsonc`).
 
 For a custom base path (for example when hosting under a subpath), set `BASE_PATH` when building, for example:
 

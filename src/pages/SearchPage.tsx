@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { fetchItems } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
 import { ArtworkImage } from "@/components/ArtworkImage";
@@ -8,6 +8,8 @@ import { useServerStore } from "@/state/serverStore";
 
 export function SearchPage() {
   const session = useServerStore((s) => s.session);
+  const location = useLocation();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<BaseItemDto[]>([]);
   const [busy, setBusy] = useState(false);
@@ -45,12 +47,21 @@ export function SearchPage() {
     };
   }, [session, trimmed]);
 
+  useLayoutEffect(() => {
+    if (location.pathname !== "/search") return;
+    const id = requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [location.pathname, location.key]);
+
   if (!session) return null;
 
   return (
     <div className="space-y-6 pt-2 md:pt-6">
       <h1 className="font-display text-3xl text-white">Search</h1>
       <input
+        ref={inputRef}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Albums, tracks, artists"

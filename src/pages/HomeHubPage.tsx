@@ -205,6 +205,7 @@ export function HomeHubPage() {
                   <ArtworkImage
                     session={session}
                     itemId={item.Id}
+                    item={item}
                     className="size-full object-cover"
                     alt=""
                     maxWidth={200}
@@ -223,6 +224,7 @@ export function HomeHubPage() {
                   <ArtworkImage
                     session={session}
                     itemId={item.Id}
+                    item={item}
                     className="w-full h-full object-cover transition group-hover:scale-[1.03]"
                     alt=""
                     maxWidth={280}
@@ -243,6 +245,7 @@ export function HomeHubPage() {
                     <ArtworkImage
                       session={session}
                       itemId={item.Id}
+                      item={item}
                       className="w-full h-full object-cover transition group-hover:scale-[1.03]"
                       alt=""
                       maxWidth={280}
@@ -272,6 +275,7 @@ export function HomeHubPage() {
                     <ArtworkImage
                       session={session}
                       itemId={tr.ParentId ?? tr.Id}
+                      item={tr}
                       className="w-full h-full object-cover"
                       alt=""
                       maxWidth={220}
@@ -327,6 +331,7 @@ function SpotlightCard({ session, item }: { session: import("@/jellyfin/types").
           <ArtworkImage
             session={session}
             itemId={item.Id}
+            item={item}
             className="w-full h-full object-cover transition group-hover:scale-[1.03]"
             alt=""
             maxWidth={280}
@@ -340,7 +345,14 @@ function SpotlightCard({ session, item }: { session: import("@/jellyfin/types").
   return (
     <Link to={`/library/${item.Id}`} className="shrink-0 w-28 flex flex-col items-center gap-2 group">
       <div className="size-24 rounded-full overflow-hidden border border-white/10">
-        <ArtworkImage session={session} itemId={item.Id} className="size-full object-cover" alt="" maxWidth={200} />
+        <ArtworkImage
+          session={session}
+          itemId={item.Id}
+          item={item}
+          className="size-full object-cover"
+          alt=""
+          maxWidth={200}
+        />
       </div>
       <span className="text-xs text-zinc-300 text-center line-clamp-2 w-full">{item.Name}</span>
     </Link>

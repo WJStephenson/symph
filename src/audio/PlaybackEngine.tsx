@@ -6,7 +6,7 @@ import {
   reportPlaybackStopped,
   streamUrl
 } from "@/jellyfin/client";
-import { ticksToSec } from "@/lib/format";
+import { queueCoverItem, ticksToSec } from "@/lib/format";
 import { getArtworkObjectUrl } from "@/jellyfin/artworkCache";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
@@ -49,8 +49,9 @@ export function PlaybackEngine() {
     const n = queue.length;
     const prefetch = (i: number) => {
       if (i < 0 || i >= n) return;
-      const id = queue[i].albumId ?? queue[i].id;
-      void getArtworkObjectUrl(session, id, { maxWidth: 96 });
+      const q = queue[i];
+      const id = q.albumId ?? q.id;
+      void getArtworkObjectUrl(session, id, { maxWidth: 96, item: queueCoverItem(q) });
     };
     prefetch(index - 1);
     prefetch(index + 1);
@@ -71,7 +72,9 @@ export function PlaybackEngine() {
     let cancelled = false;
     (async () => {
       const id = track.albumId ?? track.id;
-      const blob = await fetchImageBlob(session, id, "Primary", 900);
+      const blob = await fetchImageBlob(session, id, "Primary", 900, {
+        item: queueCoverItem(track)
+      });
       if (cancelled) return;
       if (artworkRevoke.current) {
         URL.revokeObjectURL(artworkRevoke.current);

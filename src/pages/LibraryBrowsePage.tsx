@@ -35,7 +35,7 @@ export function LibraryBrowsePage() {
           Recursive: false,
           IncludeItemTypes: "MusicAlbum,MusicArtist,Folder,Playlist,Audio",
           SortBy: "SortName",
-          Fields: "PrimaryImageAspectRatio,UserData"
+          Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
         });
         if (cancelled) return;
         let list = res.Items ?? [];
@@ -47,7 +47,7 @@ export function LibraryBrowsePage() {
             SortBy: "DateCreated",
             SortOrder: "Descending",
             Limit: 150,
-            Fields: "PrimaryImageAspectRatio,UserData"
+            Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
           });
           if (!cancelled) list = deep.Items ?? [];
         }
@@ -181,6 +181,7 @@ export function LibraryBrowsePage() {
                   <ArtworkImage
                     session={session}
                     itemId={item.Id}
+                    item={item}
                     className="w-full h-full object-cover transition duration-500 group-hover:scale-[1.03]"
                     alt=""
                     maxWidth={480}
@@ -204,6 +205,7 @@ export function LibraryBrowsePage() {
                   <ArtworkImage
                     session={session}
                     itemId={item.Id}
+                    item={item}
                     className="w-full h-full object-cover transition duration-500 group-hover:scale-[1.03]"
                     alt=""
                     maxWidth={480}

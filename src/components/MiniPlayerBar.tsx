@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { queueCoverItem } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 import { ArtworkImage } from "./ArtworkImage";
@@ -41,6 +42,7 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
                 <ArtworkImage
                   session={session}
                   itemId={track.albumId ?? track.id}
+                  item={queueCoverItem(track)}
                   className="size-full object-cover"
                   alt=""
                   maxWidth={160}

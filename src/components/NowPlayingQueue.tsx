@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 import { ArtworkImage } from "@/components/ArtworkImage";
-import { WaveformSeekBar } from "@/components/WaveformSeekBar";
+import { WaveLineSeekBar } from "@/components/WaveLineSeekBar";
 import { formatDuration, queueCoverItem } from "@/lib/format";
 import type { QueueTrack } from "@/state/playerStore";
 import { usePlayerStore } from "@/state/playerStore";
@@ -101,7 +101,6 @@ type LeftProps = {
 
 export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track }: LeftProps) {
   const accent = usePlayerStore((s) => s.accent);
-  const waveformPeaks = usePlayerStore((s) => s.waveformPeaks);
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -148,7 +147,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <p className="text-zinc-400 mt-1">{track.artist}</p>
           {track.albumTitle && <p className="text-sm text-zinc-500 mt-1">{track.albumTitle}</p>}
         </div>
-        <WaveformSeekBar peaks={waveformPeaks} onSeek={onSeek} accent={accent} height={96} />
+        <WaveLineSeekBar onSeek={onSeek} accent={accent} height={96} />
         <div className="flex justify-between text-xs text-zinc-500">
           <span>{formatDuration(positionSec)}</span>
           <span>{formatDuration(durationSec)}</span>

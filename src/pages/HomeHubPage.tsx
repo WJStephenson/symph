@@ -11,7 +11,7 @@ import {
 } from "@/jellyfin/musicHome";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 

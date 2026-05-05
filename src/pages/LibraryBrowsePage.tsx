@@ -1,20 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { fetchItem, fetchItems } from "@/jellyfin/client";
+import { fetchAllAudioUnderParent, fetchItem, fetchItems } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
 import { artistName, toQueueTrack } from "@/lib/format";
 import { ArtworkImage } from "@/components/ArtworkImage";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
+
+function shuffleInPlace<T>(arr: T[]): void {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
 export function LibraryBrowsePage() {
   const { parentId } = useParams();
   const session = useServerStore((s) => s.session);
   const setQueue = usePlayerStore((s) => s.setQueue);
   const [items, setItems] = useState<BaseItemDto[]>([]);
+  const [container, setContainer] = useState<BaseItemDto | null>(null);
   const [title, setTitle] = useState("Library");
   const [error, setError] = useState<string | null>(null);
+  const [randomBusy, setRandomBusy] = useState(false);
 
   useEffect(() => {
     if (!session || !parentId) return;
@@ -57,10 +66,12 @@ export function LibraryBrowsePage() {
     let cancelled = false;
     (async () => {
       try {
-        const lib = await fetchItem(session, parentId);
-        if (!cancelled) setTitle(lib.Name ?? "Library");
+        const item = await fetchItem(session, parentId);
+        if (cancelled) return;
+        setContainer(item);
+        setTitle(item.Name ?? "Library");
       } catch {
-        /* ignore */
+        if (!cancelled) setContainer(null);
       }
     })();
     return () => {
@@ -68,16 +79,98 @@ export function LibraryBrowsePage() {
     };
   }, [session, parentId]);
 
+  const allArtistsBrowse = useMemo(() => {
+    if (!container || container.Type !== "Folder") return false;
+    if (items.length === 0) return false;
+    return items.every((x) => x.Type === "MusicArtist");
+  }, [container, items]);
+
+  const singleArtistBrowse = container?.Type === "MusicArtist";
+
+  const playQueueFromTracks = (tracks: BaseItemDto[]) => {
+    if (!tracks.length) return;
+    const q = tracks.map((t) => toQueueTrack(t));
+    setQueue(q, 0);
+    queueMicrotask(() => void getAudioElement()?.play());
+  };
+
+  const randomPlaySingleArtist = async () => {
+    if (!session || !parentId) return;
+    setRandomBusy(true);
+    try {
+      const tracks = await fetchAllAudioUnderParent(session, parentId, 400);
+      if (!tracks.length) return;
+      shuffleInPlace(tracks);
+      playQueueFromTracks(tracks);
+    } finally {
+      setRandomBusy(false);
+    }
+  };
+
+  const randomPlayAllArtists = async () => {
+    if (!session) return;
+    const artists = items.filter((x) => x.Type === "MusicArtist");
+    if (!artists.length) return;
+    setRandomBusy(true);
+    try {
+      const merged: BaseItemDto[] = [];
+      const seen = new Set<string>();
+      const chunkSize = 4;
+      for (let i = 0; i < artists.length; i += chunkSize) {
+        const chunk = artists.slice(i, i + chunkSize);
+        const results = await Promise.all(
+          chunk.map((a) =>
+            fetchItems(session, {
+              ParentId: a.Id,
+              Recursive: true,
+              IncludeItemTypes: "Audio",
+              SortBy: "Random",
+              Limit: 48,
+              Fields: "PrimaryImageAspectRatio,UserData"
+            })
+          )
+        );
+        for (const data of results) {
+          for (const t of data.Items ?? []) {
+            if (!seen.has(t.Id)) {
+              seen.add(t.Id);
+              merged.push(t);
+            }
+          }
+        }
+      }
+      if (!merged.length) return;
+      shuffleInPlace(merged);
+      playQueueFromTracks(merged.slice(0, 280));
+    } finally {
+      setRandomBusy(false);
+    }
+  };
+
   if (!session || !parentId) return null;
 
   return (
     <div className="space-y-6 pt-2 md:pt-6">
-      <div className="flex items-center gap-3">
-        <Link to="/libraries" className="text-zinc-500 hover:text-white text-sm">
-          ← Libraries
-        </Link>
+      {!allArtistsBrowse && (
+        <div className="flex items-center gap-3">
+          <Link to="/libraries" className="text-zinc-500 hover:text-white text-sm">
+            ← Libraries
+          </Link>
+        </div>
+      )}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="font-display text-3xl text-white">{title}</h1>
+        {(allArtistsBrowse || singleArtistBrowse) && (
+          <button
+            type="button"
+            disabled={randomBusy}
+            onClick={() => void (allArtistsBrowse ? randomPlayAllArtists() : randomPlaySingleArtist())}
+            className="shrink-0 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition disabled:opacity-50"
+          >
+            {randomBusy ? "Building queue…" : "Random play"}
+          </button>
+        )}
       </div>
-      <h1 className="font-display text-3xl text-white">{title}</h1>
       {error && <div className="text-rose-300 text-sm">{error}</div>}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {items.map((item) => {

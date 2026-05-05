@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getRegisteredAudioElement } from "@/audio/audioRef";
 import type { BaseItemDto } from "@/jellyfin/types";
 
 export type QueueTrack = {
@@ -24,7 +25,6 @@ type PlayerState = {
   durationSec: number;
   artworkUrl: string | null;
   accent: string | null;
-  waveformPeaks: number[] | null;
   setQueue: (tracks: QueueTrack[], startIndex?: number) => void;
   playIndex: (i: number) => void;
   next: () => void;
@@ -36,7 +36,6 @@ type PlayerState = {
   setPlaybackMeta: (p: { positionSec: number; durationSec: number; isPlaying: boolean }) => void;
   setArtwork: (url: string | null) => void;
   setAccent: (hex: string | null) => void;
-  setWaveformPeaks: (peaks: number[] | null) => void;
 };
 
 function randomIndex(length: number, avoid: number): number {
@@ -58,20 +57,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   durationSec: 0,
   artworkUrl: null,
   accent: null,
-  waveformPeaks: null,
   setQueue: (tracks, startIndex = 0) =>
     set({
       queue: tracks,
       index: Math.min(Math.max(0, startIndex), Math.max(0, tracks.length - 1)),
       positionSec: 0,
-      durationSec: 0,
-      waveformPeaks: null
+      durationSec: 0
     }),
   playIndex: (i) => {
     const { queue } = get();
     if (!queue.length) return;
     const next = ((i % queue.length) + queue.length) % queue.length;
-    set({ index: next, positionSec: 0, waveformPeaks: null });
+    set({ index: next, positionSec: 0 });
+    queueMicrotask(() => {
+      void getRegisteredAudioElement()?.play();
+    });
   },
   next: () => {
     const { queue, index, repeat, shuffle } = get();
@@ -81,15 +81,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return;
     }
     if (shuffle) {
-      set({ index: randomIndex(queue.length, index), positionSec: 0, waveformPeaks: null });
+      set({ index: randomIndex(queue.length, index), positionSec: 0 });
       return;
     }
     if (index < queue.length - 1) {
-      set({ index: index + 1, positionSec: 0, waveformPeaks: null });
+      set({ index: index + 1, positionSec: 0 });
       return;
     }
     if (repeat === "all") {
-      set({ index: 0, positionSec: 0, waveformPeaks: null });
+      set({ index: 0, positionSec: 0 });
       return;
     }
     set({ isPlaying: false, positionSec: 0 });
@@ -101,8 +101,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ positionSec: 0 });
       return;
     }
-    if (index > 0) set({ index: index - 1, positionSec: 0, waveformPeaks: null });
-    else set({ index: queue.length - 1, positionSec: 0, waveformPeaks: null });
+    if (index > 0) set({ index: index - 1, positionSec: 0 });
+    else set({ index: queue.length - 1, positionSec: 0 });
   },
   toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
   cycleRepeat: () =>
@@ -113,6 +113,5 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   toggleMute: () => set((s) => ({ muted: !s.muted })),
   setPlaybackMeta: (p) => set(p),
   setArtwork: (url) => set({ artworkUrl: url }),
-  setAccent: (hex) => set({ accent: hex }),
-  setWaveformPeaks: (peaks) => set({ waveformPeaks: peaks })
+  setAccent: (hex) => set({ accent: hex })
 }));

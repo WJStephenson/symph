@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { fetchAlbumTracks, fetchItem } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
 import { ArtworkImage } from "@/components/ArtworkImage";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";

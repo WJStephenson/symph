@@ -107,6 +107,34 @@ export async function fetchAlbumTracks(
   return data.Items ?? [];
 }
 
+export async function fetchAllAudioUnderParent(
+  session: JellyfinSession,
+  parentId: string,
+  maxTracks = 400
+): Promise<BaseItemDto[]> {
+  const out: BaseItemDto[] = [];
+  let start = 0;
+  const limit = 120;
+  while (out.length < maxTracks) {
+    const data = await fetchItems(session, {
+      ParentId: parentId,
+      Recursive: true,
+      IncludeItemTypes: "Audio",
+      SortBy: "SortName",
+      StartIndex: start,
+      Limit: limit,
+      Fields: "PrimaryImageAspectRatio,UserData"
+    });
+    const batch = data.Items ?? [];
+    if (!batch.length) break;
+    out.push(...batch);
+    const total = data.TotalRecordCount ?? 0;
+    start += batch.length;
+    if (start >= total) break;
+  }
+  return out.slice(0, maxTracks);
+}
+
 export function streamUrl(session: JellyfinSession, itemId: string): string {
   const u = new URL(`${session.serverUrl}/Audio/${itemId}/universal`);
   u.searchParams.set("UserId", session.userId);

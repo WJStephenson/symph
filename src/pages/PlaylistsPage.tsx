@@ -21,7 +21,9 @@ export function PlaylistsPage() {
       const list = await fetchUserPlaylists(session);
       setItems(list);
     } catch {
-      setError("Could not load playlists.");
+      const msg = "Could not load playlists.";
+      pushToast(msg, "error");
+      setError(msg);
     }
   };
 

@@ -47,7 +47,11 @@ export function PlaylistEditPage() {
         setSavedName(pl.Name ?? "");
         await loadTracks();
       } catch {
-        if (!cancelled) setError("Could not load playlist.");
+        if (!cancelled) {
+          const msg = "Could not load playlist.";
+          pushToast(msg, "error");
+          setError(msg);
+        }
       }
     })();
     return () => {

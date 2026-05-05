@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { JellyfinSession } from "@/jellyfin/types";
-import { migrateSessionToHttpsIfNeeded } from "@/jellyfin/urlPolicy";
+import { reconcileSessionServerUrlForBrowser } from "@/jellyfin/urlPolicy";
 
 type ServerState = {
   session: JellyfinSession | null;
@@ -23,7 +23,7 @@ export const useServerStore = create<ServerState>()(
       merge: (persisted, current) => {
         const p = persisted as Partial<ServerState> | undefined;
         const nextSession =
-          p?.session != null ? migrateSessionToHttpsIfNeeded(p.session as JellyfinSession) : null;
+          p?.session != null ? reconcileSessionServerUrlForBrowser(p.session as JellyfinSession) : null;
         return {
           ...current,
           ...p,

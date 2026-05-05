@@ -1,6 +1,6 @@
 import type { AuthResponse, BaseItemDto, ItemsResponse, JellyfinSession } from "./types";
 import { primaryImageKnownAbsent } from "@/lib/format";
-import { pageIsHttps } from "./urlPolicy";
+import { hostFromLooseServerInput, isLikelyLocalOrLanHost, pageIsHttps } from "./urlPolicy";
 
 const CLIENT = "SymphWeb";
 const CLIENT_VERSION = "0.1.0";
@@ -8,7 +8,9 @@ const CLIENT_VERSION = "0.1.0";
 function normaliseServerUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
   if (!trimmed.startsWith("http")) {
-    return `https://${trimmed}`;
+    const host = hostFromLooseServerInput(trimmed);
+    const scheme = isLikelyLocalOrLanHost(host) ? "http" : "https";
+    return `${scheme}://${trimmed}`;
   }
   return trimmed;
 }

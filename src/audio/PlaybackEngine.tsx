@@ -7,6 +7,7 @@ import {
   streamUrl
 } from "@/jellyfin/client";
 import { ticksToSec } from "@/lib/format";
+import { getArtworkObjectUrl } from "@/jellyfin/artworkCache";
 import { getWaveformPeaks } from "@/audio/waveformPeaks";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
@@ -47,6 +48,20 @@ export function PlaybackEngine() {
     if (!el) return;
     el.volume = muted ? 0 : volume;
   }, [volume, muted]);
+
+  useEffect(() => {
+    if (!session || !queue.length) return;
+    const n = queue.length;
+    const prefetch = (i: number) => {
+      if (i < 0 || i >= n) return;
+      const id = queue[i].albumId ?? queue[i].id;
+      void getArtworkObjectUrl(session, id, { maxWidth: 96 });
+    };
+    prefetch(index - 1);
+    prefetch(index + 1);
+    prefetch(index + 2);
+    prefetch(index + 3);
+  }, [session, queue, index]);
 
   useEffect(() => {
     if (!session || !track) {
@@ -150,9 +165,13 @@ export function PlaybackEngine() {
       });
     };
     const onTime = () => {
+      const pos = el.currentTime;
+      const dur = el.duration || 0;
+      const prev = usePlayerStore.getState();
+      if (Math.abs(prev.positionSec - pos) < 0.25 && Math.abs(prev.durationSec - dur) < 0.01) return;
       setPlaybackMeta({
-        positionSec: el.currentTime,
-        durationSec: el.duration || 0,
+        positionSec: pos,
+        durationSec: dur,
         isPlaying: !el.paused
       });
     };

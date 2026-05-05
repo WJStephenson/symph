@@ -1,31 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { getAudioElement } from "@/audio/PlaybackEngine";
+import { usePlayerStore } from "@/state/playerStore";
 
 type Props = {
   peaks: number[] | null;
-  duration: number;
-  position: number;
   onSeek: (sec: number) => void;
   accent?: string | null;
   height?: number;
 };
 
-export function WaveformSeekBar({
+export const WaveformSeekBar = memo(function WaveformSeekBar({
   peaks,
-  duration,
-  position,
   onSeek,
   accent,
   height = 88
 }: Props) {
+  const positionSec = usePlayerStore((s) => s.positionSec);
+  const durationSec = usePlayerStore((s) => s.durationSec);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [local, setLocal] = useState(position);
+  const [local, setLocal] = useState(positionSec);
+  const lastPaintPos = useRef(-999);
+  const rafPaint = useRef(0);
 
   useEffect(() => {
-    if (!dragging) setLocal(position);
-  }, [position, dragging]);
+    if (!dragging) setLocal(positionSec);
+  }, [positionSec, dragging]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -47,6 +48,7 @@ export function WaveformSeekBar({
         const t = i / bars;
         return 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(t * Math.PI * 5));
       });
+    const duration = durationSec;
     const played = duration > 0 ? Math.min(1, local / duration) : 0;
     const mid = h * 0.5;
     const maxAmp = h * 0.38;
@@ -70,16 +72,27 @@ export function WaveformSeekBar({
     ctx.strokeStyle = "rgba(0,0,0,0.35)";
     ctx.lineWidth = 1;
     ctx.stroke();
-  }, [peaks, duration, local, accent, height]);
+  }, [peaks, durationSec, local, accent, height]);
 
   useEffect(() => {
-    draw();
-  }, [draw]);
+    if (dragging) {
+      draw();
+      return;
+    }
+    if (Math.abs(local - lastPaintPos.current) < 0.12) return;
+    lastPaintPos.current = local;
+    cancelAnimationFrame(rafPaint.current);
+    rafPaint.current = requestAnimationFrame(() => draw());
+    return () => cancelAnimationFrame(rafPaint.current);
+  }, [draw, dragging, local]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const ro = new ResizeObserver(() => draw());
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(rafPaint.current);
+      rafPaint.current = requestAnimationFrame(() => draw());
+    });
     ro.observe(wrap);
     return () => ro.disconnect();
   }, [draw]);
@@ -87,6 +100,7 @@ export function WaveformSeekBar({
   const setFromClientX = useCallback(
     (clientX: number) => {
       const el = wrapRef.current;
+      const duration = durationSec;
       if (!el || duration <= 0) return;
       const rect = el.getBoundingClientRect();
       const x = Math.min(Math.max(0, clientX - rect.left), rect.width);
@@ -94,7 +108,7 @@ export function WaveformSeekBar({
       setLocal(next);
       onSeek(next);
     },
-    [duration, onSeek]
+    [durationSec, onSeek]
   );
 
   useEffect(() => {
@@ -122,4 +136,4 @@ export function WaveformSeekBar({
       <canvas ref={canvasRef} className="w-full block" style={{ height }} />
     </div>
   );
-}
+});

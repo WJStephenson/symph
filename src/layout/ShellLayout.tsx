@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { MiniPlayerBar } from "@/components/MiniPlayerBar";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
@@ -20,8 +20,7 @@ export function ShellLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   if (!session) {
-    navigate("/welcome", { replace: true });
-    return null;
+    return <Navigate to="/welcome" replace />;
   }
 
   const showPlayer = queueLen > 0;

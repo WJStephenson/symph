@@ -4,6 +4,7 @@ import { Navigate, NavLink, Outlet, useNavigate, useLocation } from "react-route
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { SymphMark } from "@/components/SymphMark";
+import { ToastHost } from "@/components/ToastHost";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { usePlayerStore } from "@/state/playerStore";
@@ -136,6 +137,7 @@ export function ShellLayout() {
         <div className="flex-1" />
       </aside>
       <PlaybackEngine />
+      <ToastHost />
     </div>
   );
 }

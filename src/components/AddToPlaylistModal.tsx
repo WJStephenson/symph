@@ -6,6 +6,7 @@ import {
   fetchUserPlaylists
 } from "@/jellyfin/playlists";
 import type { BaseItemDto, JellyfinSession } from "@/jellyfin/types";
+import { pushToast } from "@/state/toastStore";
 
 type Props = {
   open: boolean;
@@ -65,9 +66,14 @@ export function AddToPlaylistModal({
     setError(null);
     try {
       await addTracksToPlaylist(session, playlistId, trackIds);
+      const plName = playlists.find((p) => p.Id === playlistId)?.Name ?? "playlist";
+      const n = trackIds.length;
+      const bit = n === 1 ? "track" : "tracks";
+      pushToast(`Added ${n} ${bit} to “${plName}”`);
       onAdded?.();
       onClose();
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not add to playlist.", "error");
       setError(e instanceof Error ? e.message : "Could not add to playlist.");
     } finally {
       setBusy(false);
@@ -79,10 +85,15 @@ export function AddToPlaylistModal({
     setBusy(true);
     setError(null);
     try {
-      await createPlaylist(session, newName.trim(), trackIds);
+      const label = newName.trim();
+      await createPlaylist(session, label, trackIds);
+      const n = trackIds.length;
+      const bit = n === 1 ? "track" : "tracks";
+      pushToast(`Created “${label}” and added ${n} ${bit}`);
       onAdded?.();
       onClose();
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not create playlist.", "error");
       setError(e instanceof Error ? e.message : "Could not create playlist.");
     } finally {
       setBusy(false);

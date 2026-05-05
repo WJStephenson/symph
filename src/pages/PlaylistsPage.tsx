@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPlaylist, fetchUserPlaylists } from "@/jellyfin/playlists";
 import type { BaseItemDto } from "@/jellyfin/types";
 import { ArtworkImage } from "@/components/ArtworkImage";
+import { pushToast } from "@/state/toastStore";
 import { useServerStore } from "@/state/serverStore";
 
 export function PlaylistsPage() {
@@ -33,11 +34,14 @@ export function PlaylistsPage() {
     setBusy(true);
     setError(null);
     try {
-      const id = await createPlaylist(session, newName.trim());
+      const label = newName.trim();
+      const id = await createPlaylist(session, label);
       setNewName("");
       await load();
+      pushToast(`Created playlist “${label}”`);
       navigate(`/playlists/${id}/edit`, { replace: true });
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not create playlist.", "error");
       setError(e instanceof Error ? e.message : "Could not create playlist.");
     } finally {
       setBusy(false);

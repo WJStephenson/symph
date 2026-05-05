@@ -14,6 +14,7 @@ import { ArtworkImage } from "@/components/ArtworkImage";
 import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
+import { pushToast } from "@/state/toastStore";
 import { useServerStore } from "@/state/serverStore";
 
 export function PlaylistEditPage() {
@@ -94,7 +95,9 @@ export function PlaylistEditPage() {
     try {
       await updatePlaylistName(session, playlistId, n);
       setSavedName(n);
+      pushToast(`Playlist renamed to “${n}”`);
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not save name.", "error");
       setError(e instanceof Error ? e.message : "Could not save name.");
     } finally {
       setBusy(false);
@@ -107,7 +110,9 @@ export function PlaylistEditPage() {
     try {
       await removeTracksFromPlaylist(session, playlistId, [entryId]);
       await loadTracks();
+      pushToast("Removed track from playlist");
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not remove track.", "error");
       setError(e instanceof Error ? e.message : "Could not remove track.");
     } finally {
       setBusy(false);
@@ -122,7 +127,9 @@ export function PlaylistEditPage() {
       setAddQuery("");
       setAddResults([]);
       await loadTracks();
+      pushToast(`Added “${track.Name ?? "Track"}” to playlist`);
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not add track.", "error");
       setError(e instanceof Error ? e.message : "Could not add track.");
     } finally {
       setBusy(false);
@@ -136,8 +143,10 @@ export function PlaylistEditPage() {
     setError(null);
     try {
       await deletePlaylistItem(session, playlistId);
+      pushToast(`Deleted playlist “${savedName || name.trim() || "Playlist"}”`);
       navigate("/playlists", { replace: true });
     } catch (e) {
+      pushToast(e instanceof Error ? e.message : "Could not delete playlist.", "error");
       setError(e instanceof Error ? e.message : "Could not delete playlist.");
     } finally {
       setBusy(false);

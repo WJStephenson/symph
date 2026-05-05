@@ -1,19 +1,18 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { getAudioElement } from "@/audio/audioRef";
+import { VolumePopoverButton } from "@/components/VolumePopoverButton";
 import { accentTheme } from "@/lib/accentTheme";
 import { queueCoverItem } from "@/lib/format";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
-import { VolumePopoverButton } from "@/components/VolumePopoverButton";
 import { ArtworkImage } from "./ArtworkImage";
 
 type Props = {
   onExpand: () => void;
-  className?: string;
 };
 
-export function MiniPlayerBar({ onExpand, className }: Props) {
+export function MiniPlayerBar({ onExpand }: Props) {
   const session = useServerStore((s) => s.session);
   const queue = usePlayerStore((s) => s.queue);
   const index = usePlayerStore((s) => s.index);
@@ -22,8 +21,12 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
   const durationSec = usePlayerStore((s) => s.durationSec);
   const accent = usePlayerStore((s) => s.accent);
   const theme = useMemo(() => accentTheme(accent), [accent]);
+  const shuffle = usePlayerStore((s) => s.shuffle);
+  const repeat = usePlayerStore((s) => s.repeat);
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
+  const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
+  const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
   const track = queue[index];
 
   if (!session || !track) return null;
@@ -31,57 +34,83 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
   const pct = durationSec > 0 ? Math.min(100, (positionSec / durationSec) * 100) : 0;
 
   return (
-    <div className={className}>
-      <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto">
+      <div
+        className="glass rounded-2xl overflow-hidden border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out"
+        style={{ boxShadow: theme.miniShadow }}
+      >
         <div
-          className="glass rounded-2xl overflow-hidden border border-white/10"
-          style={{ boxShadow: theme.miniShadow }}
+          className="h-[3px] symph-tone-transition"
+          style={{ backgroundColor: theme.progressTrack }}
         >
-          <div className="h-[3px]" style={{ backgroundColor: theme.progressTrack }}>
-            <div className="h-full" style={{ width: `${pct}%`, backgroundColor: theme.progress }} />
-          </div>
-          <div className="flex items-center gap-3 p-2.5">
-            <button
-              type="button"
-              onClick={onExpand}
-              className="flex items-center gap-3 min-w-0 flex-1 text-left"
+          <div
+            className="h-full symph-tone-transition"
+            style={{ width: `${pct}%`, backgroundColor: theme.progress }}
+          />
+        </div>
+        <div className="flex items-center gap-3 p-2.5">
+          <button
+            type="button"
+            onClick={onExpand}
+            className="flex items-center gap-3 min-w-0 flex-1 text-left"
+          >
+            <div
+              className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/10"
+              style={{ viewTransitionName: "symph-artwork" }}
             >
-              <div className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/10">
-                <ArtworkImage
-                  session={session}
-                  itemId={track.albumId ?? track.id}
-                  item={queueCoverItem(track)}
-                  className="size-full object-cover"
-                  alt=""
-                  maxWidth={160}
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-white truncate">{track.title}</div>
-                <div className="text-xs text-zinc-400 truncate">{track.artist}</div>
-              </div>
-            </button>
-            <div className="flex items-center gap-1 shrink-0">
-              <IconButton label="Previous" onClick={() => prev()}>
-                <PrevIcon />
-              </IconButton>
-              <IconButton
-                label={isPlaying ? "Pause" : "Play"}
-                onClick={() => {
-                  const el = getAudioElement();
-                  if (!el) return;
-                  if (el.paused) void el.play();
-                  else el.pause();
-                }}
-                primary
-              >
-                {isPlaying ? <PauseIcon /> : <PlayIcon />}
-              </IconButton>
-              <IconButton label="Next" onClick={() => next()}>
-                <NextIcon />
-              </IconButton>
-              <VolumePopoverButton theme={theme} variant="mini" />
+              <ArtworkImage
+                session={session}
+                itemId={track.albumId ?? track.id}
+                item={queueCoverItem(track)}
+                className="size-full object-cover"
+                alt=""
+                maxWidth={160}
+              />
             </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-white truncate">{track.title}</div>
+              <div className="text-xs text-zinc-400 truncate">{track.artist}</div>
+            </div>
+          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <MiniGhostButton
+              active={shuffle}
+              label="Shuffle"
+              theme={theme}
+              transitionName="symph-control-shuffle"
+              onClick={() => toggleShuffle()}
+            >
+              <ShuffleGlyph />
+            </MiniGhostButton>
+            <IconButton label="Previous" transitionName="symph-control-prev" onClick={() => prev()}>
+              <PrevIcon />
+            </IconButton>
+            <IconButton
+              label={isPlaying ? "Pause" : "Play"}
+              transitionName="symph-control-play"
+              primary
+              onClick={() => {
+                const el = getAudioElement();
+                if (!el) return;
+                if (el.paused) void el.play();
+                else el.pause();
+              }}
+            >
+              {isPlaying ? <PauseIcon /> : <PlayIcon />}
+            </IconButton>
+            <IconButton label="Next" transitionName="symph-control-next" onClick={() => next()}>
+              <NextIcon />
+            </IconButton>
+            <MiniGhostButton
+              active={repeat !== "off"}
+              label="Repeat"
+              theme={theme}
+              transitionName="symph-control-repeat"
+              onClick={() => cycleRepeat()}
+            >
+              <RepeatGlyph mode={repeat} />
+            </MiniGhostButton>
+            <VolumePopoverButton theme={theme} variant="mini" morphTransition />
           </div>
         </div>
       </div>
@@ -89,16 +118,20 @@ export function MiniPlayerBar({ onExpand, className }: Props) {
   );
 }
 
-function IconButton({
+function MiniGhostButton({
   children,
   onClick,
   label,
-  primary
+  active,
+  theme,
+  transitionName
 }: {
   children: ReactNode;
   onClick: () => void;
   label: string;
-  primary?: boolean;
+  active?: boolean;
+  theme: ReturnType<typeof accentTheme>;
+  transitionName: string;
 }) {
   return (
     <button
@@ -108,11 +141,48 @@ function IconButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`inline-flex items-center justify-center rounded-full transition ${
+      className={`size-9 inline-flex items-center justify-center rounded-full symph-tone-transition shrink-0 ${
+        active ? "" : "text-zinc-200 hover:bg-white/10"
+      }`}
+      style={{
+        ...(active
+          ? { backgroundColor: theme.ghostActiveBg, color: theme.ghostActiveText }
+          : undefined),
+        viewTransitionName: transitionName
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function IconButton({
+  children,
+  onClick,
+  label,
+  primary,
+  transitionName
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  label: string;
+  primary?: boolean;
+  transitionName: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`inline-flex items-center justify-center rounded-full transition shrink-0 ${
         primary
           ? "size-11 bg-white text-zinc-900 shadow-lg"
           : "size-9 text-zinc-200 hover:bg-white/10"
       }`}
+      style={{ viewTransitionName: transitionName }}
     >
       {children}
     </button>
@@ -147,6 +217,33 @@ function NextIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M16 18h2V6h-2v12ZM6 18l8.5-6L6 6v12Z" />
+    </svg>
+  );
+}
+
+function ShuffleGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path
+        d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function RepeatGlyph({ mode }: { mode: "off" | "all" | "one" }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path d="M17 1l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+      {mode === "one" && (
+        <text x="9" y="16" fontSize="8" fill="currentColor" stroke="none">
+          1
+        </text>
+      )}
     </svg>
   );
 }

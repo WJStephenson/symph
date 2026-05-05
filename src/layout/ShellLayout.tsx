@@ -5,6 +5,7 @@ import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { MiniPlayerBar } from "@/components/MiniPlayerBar";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { accentTheme } from "@/lib/accentTheme";
+import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
@@ -13,6 +14,8 @@ const tabs = [
   { to: "/search", label: "Search", icon: SearchIcon },
   { to: "/settings", label: "More", icon: MoreIcon }
 ];
+
+const SIDEBAR_COLLAPSED = "4rem";
 
 export function ShellLayout() {
   const session = useServerStore((s) => s.session);
@@ -28,20 +31,34 @@ export function ShellLayout() {
 
   const showPlayer = queueLen > 0;
 
+  const openSheet = () => {
+    startViewTransitionIfSupported(() => setSheetOpen(true));
+  };
+
+  const closeSheet = () => {
+    startViewTransitionIfSupported(() => setSheetOpen(false));
+  };
+
+  const shellVars = {
+    ["--symph-tone"]: theme.fill,
+    ["--symph-accent"]: theme.fill,
+    ["--symph-accent-border"]: `color-mix(in srgb, var(--symph-tone) 28%, transparent)`,
+    ["--symph-accent-border-hover"]: `color-mix(in srgb, var(--symph-tone) 42%, transparent)`,
+    ["--symph-sidebar-w"]: SIDEBAR_COLLAPSED,
+    ["--symph-bottom-wash"]: [
+      `radial-gradient(95% 55% at 50% 100%, color-mix(in srgb, var(--symph-tone) 18%, transparent) 0%, transparent 72%)`,
+      `linear-gradient(180deg, transparent 0%, transparent 42%, color-mix(in srgb, var(--symph-tone) 10%, transparent) 100%)`
+    ].join(", ")
+  } as CSSProperties;
+
   return (
     <div
-      className="relative min-h-full md:pl-64"
-      style={
-        {
-          ["--symph-accent"]: theme.fill,
-          ["--symph-accent-border"]: theme.softBorder,
-          ["--symph-accent-border-hover"]: theme.softBorderHover
-        } as CSSProperties
-      }
+      className="relative min-h-full md:pl-[var(--symph-sidebar-w)] symph-tone-transition"
+      style={shellVars}
     >
       <div
-        className="pointer-events-none fixed inset-0 z-0 md:left-64"
-        style={{ background: theme.bottomGradient }}
+        className="pointer-events-none fixed inset-0 z-0 symph-tone-transition md:left-[var(--symph-sidebar-w)]"
+        style={{ background: "var(--symph-bottom-wash)" }}
         aria-hidden
       />
       <div
@@ -52,11 +69,13 @@ export function ShellLayout() {
           <Outlet />
         </main>
       </div>
-      {showPlayer && (
-        <MiniPlayerBar
-          onExpand={() => setSheetOpen(true)}
-          className="fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(16rem+1rem)] px-3 md:px-8"
-        />
+      {showPlayer && !sheetOpen && (
+        <div
+          className="fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8"
+          style={{ viewTransitionName: "symph-mini-chrome" }}
+        >
+          <MiniPlayerBar onExpand={openSheet} />
+        </div>
       )}
       <nav className="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/10 pb-[calc(0.5rem+var(--safe-bottom))] pt-2 md:hidden">
         <div className="max-w-lg mx-auto flex justify-around items-end">
@@ -65,22 +84,27 @@ export function ShellLayout() {
           ))}
         </div>
       </nav>
-      <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] z-30">
-        <button type="button" onClick={() => navigate("/")} className="mx-4 mt-4 mb-6 text-left">
-          <div className="font-display text-xl tracking-tight text-white">Symph</div>
-          <div className="text-xs text-zinc-500">Jellyfin music</div>
+      <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
+        <button type="button" onClick={() => navigate("/")} className="mx-3 mt-4 mb-6 text-left shrink-0 w-full">
+          <div className="block group-hover/sidebar:hidden">
+            <div className="font-display text-lg text-white w-10 text-center mx-auto">S</div>
+          </div>
+          <div className="hidden group-hover/sidebar:block">
+            <div className="font-display text-xl tracking-tight text-white">Symph</div>
+            <div className="text-xs text-zinc-500">Jellyfin music</div>
+          </div>
         </button>
-        <div className="flex flex-col gap-1 px-3">
-          <SideLink to="/" label="Home" />
-          <SideLink to="/libraries" label="Browse library" />
-          <SideLink to="/search" label="Search" />
-          <SideLink to="/playlists" label="Playlists" />
-          <SideLink to="/settings" label="Settings" />
+        <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
+          <SideLink to="/" label="Home" icon={HomeIcon} />
+          <SideLink to="/libraries" label="Browse library" icon={LibraryIcon} />
+          <SideLink to="/search" label="Search" icon={SearchIcon} />
+          <SideLink to="/playlists" label="Playlists" icon={PlaylistIcon} />
+          <SideLink to="/settings" label="Settings" icon={SettingsIcon} />
         </div>
         <div className="flex-1" />
       </aside>
       <PlaybackEngine />
-      <NowPlayingSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <NowPlayingSheet open={sheetOpen} onClose={closeSheet} />
     </div>
   );
 }
@@ -98,7 +122,7 @@ function Tab({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-4 py-1 rounded-xl text-[11px] ${
+        `flex flex-col items-center gap-1 px-4 py-1 rounded-xl text-[11px] symph-tone-transition ${
           isActive ? "text-white" : "text-zinc-500"
         }`
       }
@@ -112,29 +136,43 @@ function Tab({
   );
 }
 
-function SideLink({ to, label }: { to: string; label: string }) {
+function SideLink({
+  to,
+  label,
+  icon: Icon
+}: {
+  to: string;
+  label: string;
+  icon: () => ReactElement;
+}) {
   return (
     <NavLink
       to={to}
+      title={label}
       className={({ isActive }) =>
-        `px-3 py-2 rounded-xl text-sm ${
+        `flex items-center gap-3 rounded-xl text-sm symph-tone-transition overflow-hidden ${
           isActive
-            ? "bg-white/10 text-white border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))]"
-            : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+            ? "bg-white/10 text-white border border-[color:var(--symph-accent-border,rgba(129,140,248,0.28))] py-2 pl-2 pr-3"
+            : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent py-2 pl-2 pr-3"
         }`
       }
       style={({ isActive }) =>
         isActive ? ({ color: "var(--symph-accent, rgb(165, 180, 252))" } as CSSProperties) : undefined
       }
     >
-      {label}
+      <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 text-current">
+        <Icon />
+      </span>
+      <span className="whitespace-nowrap truncate min-w-0 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-[11rem] md:group-hover/sidebar:opacity-100 transition-[max-width,opacity] duration-300 ease-out">
+        {label}
+      </span>
     </NavLink>
   );
 }
 
 function HomeIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-90">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="opacity-90">
       <path
         d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"
         stroke="currentColor"
@@ -147,9 +185,39 @@ function HomeIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-90">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="opacity-90">
       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.6" />
       <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LibraryIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M4 6h16v14H4z" strokeLinejoin="round" />
+      <path d="M8 10h8M8 14h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PlaylistIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M8 6h13M8 12h13M8 18h13" strokeLinecap="round" />
+      <path d="M4 6h.01M4 12h.01M4 18h.01" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

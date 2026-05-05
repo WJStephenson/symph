@@ -56,7 +56,7 @@ export function NowPlayingSheet({ open, onClose }: Props) {
           <div className="w-14" />
         </header>
         <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-zinc-950/98">
-          <PlayerLeftColumn session={session} track={track} />
+          <PlayerLeftColumn session={session} track={track} morphTransition />
           <VirtualizedQueue key={queueKey} session={session} queue={queue} activeIndex={index} />
         </div>
       </div>

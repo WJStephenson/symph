@@ -130,9 +130,14 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
 type LeftProps = {
   session: JellyfinSession;
   track: QueueTrack;
+  morphTransition?: boolean;
 };
 
-export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track }: LeftProps) {
+export const PlayerLeftColumn = memo(function PlayerLeftColumn({
+  session,
+  track,
+  morphTransition
+}: LeftProps) {
   const accent = usePlayerStore((s) => s.accent);
   const theme = useMemo(() => accentTheme(accent), [accent]);
   const positionSec = usePlayerStore((s) => s.positionSec);
@@ -154,7 +159,10 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
   return (
     <aside className="shrink-0 lg:w-[min(100%,420px)] xl:w-[440px] lg:max-w-[42vw] border-b lg:border-b-0 lg:border-r border-white/10 overflow-y-auto no-scrollbar">
       <div className="p-5 lg:p-8 space-y-5 max-w-md mx-auto lg:mx-0 lg:max-w-none">
-        <div className="relative mx-auto w-full max-w-[280px] lg:max-w-none aspect-square rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10">
+        <div
+          className="relative mx-auto w-full max-w-[280px] lg:max-w-none aspect-square rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10"
+          style={morphTransition ? { viewTransitionName: "symph-artwork" } : undefined}
+        >
           <div
             className="absolute inset-0 opacity-35 blur-3xl scale-110"
             style={{
@@ -183,15 +191,29 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           <span>{formatDuration(durationSec)}</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 lg:gap-6 pt-1 pb-2 lg:pb-0">
-          <GhostIconButton active={shuffle} label="Shuffle" theme={theme} onClick={() => toggleShuffle()}>
+          <GhostIconButton
+            active={shuffle}
+            label="Shuffle"
+            theme={theme}
+            morphTransition={morphTransition}
+            transitionName="symph-control-shuffle"
+            onClick={() => toggleShuffle()}
+          >
             <ShuffleIcon />
           </GhostIconButton>
-          <IconCircle label="Previous" onClick={() => prev()}>
+          <IconCircle
+            label="Previous"
+            morphTransition={morphTransition}
+            transitionName="symph-control-prev"
+            onClick={() => prev()}
+          >
             <PrevIcon />
           </IconCircle>
           <IconCircle
             large
             label={isPlaying ? "Pause" : "Play"}
+            morphTransition={morphTransition}
+            transitionName="symph-control-play"
             onClick={() => {
               const el = getAudioElement();
               if (!el) return;
@@ -201,13 +223,25 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({ session, track 
           >
             {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </IconCircle>
-          <IconCircle label="Next" onClick={() => next()}>
+          <IconCircle
+            label="Next"
+            morphTransition={morphTransition}
+            transitionName="symph-control-next"
+            onClick={() => next()}
+          >
             <NextIcon />
           </IconCircle>
-          <GhostIconButton active={repeat !== "off"} label="Repeat" theme={theme} onClick={() => cycleRepeat()}>
+          <GhostIconButton
+            active={repeat !== "off"}
+            label="Repeat"
+            theme={theme}
+            morphTransition={morphTransition}
+            transitionName="symph-control-repeat"
+            onClick={() => cycleRepeat()}
+          >
             <RepeatIcon mode={repeat} />
           </GhostIconButton>
-          <VolumePopoverButton theme={theme} />
+          <VolumePopoverButton theme={theme} morphTransition={morphTransition} />
         </div>
       </div>
     </aside>
@@ -218,12 +252,16 @@ function IconCircle({
   children,
   onClick,
   label,
-  large
+  large,
+  morphTransition,
+  transitionName
 }: {
   children: ReactNode;
   onClick: () => void;
   label: string;
   large?: boolean;
+  morphTransition?: boolean;
+  transitionName?: string;
 }) {
   return (
     <button
@@ -233,6 +271,7 @@ function IconCircle({
       className={`inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white ${
         large ? "size-16" : "size-12"
       }`}
+      style={morphTransition && transitionName ? { viewTransitionName: transitionName } : undefined}
     >
       {children}
     </button>
@@ -244,27 +283,32 @@ function GhostIconButton({
   onClick,
   label,
   active,
-  theme
+  theme,
+  morphTransition,
+  transitionName
 }: {
   children: ReactNode;
   onClick: () => void;
   label: string;
   active?: boolean;
   theme: ReturnType<typeof accentTheme>;
+  morphTransition?: boolean;
+  transitionName?: string;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
       onClick={onClick}
-      className={`size-10 inline-flex items-center justify-center rounded-full ${
+      className={`size-10 inline-flex items-center justify-center rounded-full symph-tone-transition ${
         active ? "" : "text-zinc-400 hover:text-white"
       }`}
-      style={
-        active
+      style={{
+        ...(active
           ? { backgroundColor: theme.ghostActiveBg, color: theme.ghostActiveText }
-          : undefined
-      }
+          : undefined),
+        ...(morphTransition && transitionName ? { viewTransitionName: transitionName } : undefined)
+      }}
     >
       {children}
     </button>

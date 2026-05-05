@@ -6,9 +6,10 @@ import { usePlayerStore } from "@/state/playerStore";
 type Props = {
   theme: AccentTheme;
   variant?: "transport" | "mini";
+  morphTransition?: boolean;
 };
 
-export function VolumePopoverButton({ theme, variant = "transport" }: Props) {
+export function VolumePopoverButton({ theme, variant = "transport", morphTransition }: Props) {
   const isMini = variant === "mini";
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
@@ -87,13 +88,15 @@ export function VolumePopoverButton({ theme, variant = "transport" }: Props) {
         open ? "" : "text-zinc-400 hover:text-white"
       }`;
 
-  const triggerStyle =
-    open
+  const triggerStyle: CSSProperties = {
+    ...(open
       ? {
           backgroundColor: theme.ghostActiveBg,
           color: theme.ghostActiveText
         }
-      : undefined;
+      : {}),
+    ...(morphTransition ? { viewTransitionName: "symph-control-volume" } : {})
+  };
 
   return (
     <>

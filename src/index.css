@@ -4,12 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
+@property --symph-tone {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgb(129, 140, 248);
+}
+
 :root {
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+}
+
+.symph-tone-transition {
+  transition: --symph-tone 0.55s ease;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(symph-artwork) {
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(symph-control-prev),
+::view-transition-group(symph-control-play),
+::view-transition-group(symph-control-next),
+::view-transition-group(symph-control-volume),
+::view-transition-group(symph-control-shuffle),
+::view-transition-group(symph-control-repeat) {
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(symph-mini-chrome) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html,

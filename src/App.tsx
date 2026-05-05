@@ -8,6 +8,7 @@ import { AlbumPage } from "./pages/AlbumPage";
 import { SearchPage } from "./pages/SearchPage";
 import { PlaylistsPage } from "./pages/PlaylistsPage";
 import { PlaylistEditPage } from "./pages/PlaylistEditPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { useServerStore } from "./state/serverStore";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/library/:parentId" element={<LibraryBrowsePage />} />
         <Route path="/album/:albumId" element={<AlbumPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/playlists" element={<PlaylistsPage />} />
         <Route path="/playlists/:playlistId/edit" element={<PlaylistEditPage />} />
       </Route>

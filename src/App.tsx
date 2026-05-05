@@ -6,7 +6,8 @@ import { LibrariesPage } from "./pages/LibrariesPage";
 import { LibraryBrowsePage } from "./pages/LibraryBrowsePage";
 import { AlbumPage } from "./pages/AlbumPage";
 import { SearchPage } from "./pages/SearchPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { PlaylistsPage } from "./pages/PlaylistsPage";
+import { PlaylistEditPage } from "./pages/PlaylistEditPage";
 import { useServerStore } from "./state/serverStore";
 
 function App() {
@@ -24,7 +25,8 @@ function App() {
         <Route path="/library/:parentId" element={<LibraryBrowsePage />} />
         <Route path="/album/:albumId" element={<AlbumPage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/playlists" element={<PlaylistsPage />} />
+        <Route path="/playlists/:playlistId/edit" element={<PlaylistEditPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

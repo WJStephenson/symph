@@ -57,6 +57,7 @@ export function ShellLayout() {
           <SideLink to="/" label="Home" />
           <SideLink to="/libraries" label="Browse library" />
           <SideLink to="/search" label="Search" />
+          <SideLink to="/playlists" label="Playlists" />
           <SideLink to="/settings" label="Settings" />
         </div>
         <div className="flex-1" />

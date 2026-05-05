@@ -28,7 +28,7 @@ function pageHostname(): string {
   return window.location.hostname.toLowerCase();
 }
 
-function mediaApiUrl(session: JellyfinSession, built: URL): string {
+export function mediaApiUrl(session: JellyfinSession, built: URL): string {
   const jellyHost = jellyfinHostname(session);
   const sameHost = jellyHost !== "" && jellyHost === pageHostname();
   if (pageIsHttps() && session.serverUrl.startsWith("http://") && sameHost) {

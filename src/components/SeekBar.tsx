@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 
 type Props = {
   duration: number;

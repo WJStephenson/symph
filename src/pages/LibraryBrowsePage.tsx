@@ -4,7 +4,7 @@ import { fetchAllAudioUnderParent, fetchItem, fetchItems } from "@/jellyfin/clie
 import type { BaseItemDto } from "@/jellyfin/types";
 import { artistName, toQueueTrack } from "@/lib/format";
 import { ArtworkImage } from "@/components/ArtworkImage";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 import { ArtworkImage } from "./ArtworkImage";
-import { getAudioElement } from "@/audio/PlaybackEngine";
+import { getAudioElement } from "@/audio/audioRef";
 
 type Props = {
   onExpand: () => void;

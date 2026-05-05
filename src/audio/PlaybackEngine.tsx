@@ -8,15 +8,10 @@ import {
 } from "@/jellyfin/client";
 import { ticksToSec } from "@/lib/format";
 import { getArtworkObjectUrl } from "@/jellyfin/artworkCache";
-import { getWaveformPeaks } from "@/audio/waveformPeaks";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
-let audioEl: HTMLAudioElement | null = null;
-
-export function getAudioElement(): HTMLAudioElement | null {
-  return audioEl;
-}
+import { setRegisteredAudioElement } from "@/audio/audioRef";
 
 export function PlaybackEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -29,7 +24,6 @@ export function PlaybackEngine() {
   const setPlaybackMeta = usePlayerStore((s) => s.setPlaybackMeta);
   const setArtwork = usePlayerStore((s) => s.setArtwork);
   const setAccent = usePlayerStore((s) => s.setAccent);
-  const setWaveformPeaks = usePlayerStore((s) => s.setWaveformPeaks);
   const next = usePlayerStore((s) => s.next);
   const artworkRevoke = useRef<string | null>(null);
 
@@ -37,9 +31,10 @@ export function PlaybackEngine() {
   const trackId = track?.id;
 
   useEffect(() => {
-    audioEl = audioRef.current;
+    const el = audioRef.current;
+    setRegisteredAudioElement(el);
     return () => {
-      audioEl = null;
+      setRegisteredAudioElement(null);
     };
   }, []);
 
@@ -127,22 +122,6 @@ export function PlaybackEngine() {
       cancelled = true;
     };
   }, [session, track, setArtwork, setAccent]);
-
-  useEffect(() => {
-    if (!session || !trackId) {
-      setWaveformPeaks(null);
-      return;
-    }
-    let cancelled = false;
-    setWaveformPeaks(null);
-    void (async () => {
-      const peaks = await getWaveformPeaks(session, trackId, 220);
-      if (!cancelled) setWaveformPeaks(peaks);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session, trackId, setWaveformPeaks]);
 
   useEffect(() => {
     const el = audioRef.current;

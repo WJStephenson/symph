@@ -94,6 +94,33 @@ export async function fetchItem(session: JellyfinSession, itemId: string): Promi
   return (await res.json()) as BaseItemDto;
 }
 
+export async function fetchFirstDescendantWithPrimaryImage(
+  session: JellyfinSession,
+  artistId: string,
+  maxScanned = 400
+): Promise<BaseItemDto | null> {
+  let start = 0;
+  const limit = 100;
+  while (start < maxScanned) {
+    const data = await fetchItems(session, {
+      ParentId: artistId,
+      Recursive: true,
+      IncludeItemTypes: "MusicAlbum,Audio",
+      SortBy: "SortName",
+      StartIndex: start,
+      Limit: limit,
+      Fields: "PrimaryImageAspectRatio,ImageTags"
+    });
+    const items = data.Items ?? [];
+    for (const x of items) {
+      if (x.ImageTags?.Primary) return x;
+    }
+    if (items.length < limit) break;
+    start += items.length;
+  }
+  return null;
+}
+
 export async function fetchAlbumTracks(
   session: JellyfinSession,
   albumId: string

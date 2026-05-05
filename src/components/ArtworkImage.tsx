@@ -1,4 +1,5 @@
 import { memo, useEffect, useState } from "react";
+import { fetchFirstDescendantWithPrimaryImage, fetchItem } from "@/jellyfin/client";
 import { getArtworkObjectUrl, peekArtworkObjectUrl } from "@/jellyfin/artworkCache";
 import type { BaseItemDto, JellyfinSession } from "@/jellyfin/types";
 import { primaryImageKnownAbsent } from "@/lib/format";
@@ -16,6 +17,11 @@ type Props = {
   skipColourAnalysis?: boolean;
 };
 
+type ImageSource = {
+  fetchId: string;
+  hint?: BaseItemDto;
+};
+
 export const ArtworkImage = memo(function ArtworkImage({
   session,
   itemId,
@@ -28,26 +34,58 @@ export const ArtworkImage = memo(function ArtworkImage({
   priority = false,
   skipColourAnalysis = false
 }: Props) {
-  const skipFetch =
-    item && item.Id === itemId ? primaryImageKnownAbsent(item) : false;
-
-  const [url, setUrl] = useState<string | null>(() =>
-    skipFetch ? null : peekArtworkObjectUrl(session, itemId, { type, maxWidth })
-  );
+  const [source, setSource] = useState<ImageSource | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setSource(null);
+    setUrl(null);
+    void (async () => {
+      let meta = item?.Id === itemId ? item : undefined;
+      if (!meta) {
+        try {
+          meta = await fetchItem(session, itemId);
+        } catch {
+          meta = undefined;
+        }
+      }
+      if (cancelled) return;
+      let fetchId = itemId;
+      let hint: BaseItemDto | undefined = meta && meta.Id === itemId ? meta : undefined;
+      if (meta?.Type === "MusicArtist" && primaryImageKnownAbsent(meta)) {
+        const first = await fetchFirstDescendantWithPrimaryImage(session, itemId);
+        if (cancelled) return;
+        if (first) {
+          fetchId = first.Id;
+          hint = first;
+        }
+      }
+      if (cancelled) return;
+      setSource({ fetchId, hint });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, itemId, item]);
+
+  useEffect(() => {
+    if (!source) return;
+    const { fetchId, hint } = source;
+    const opts = { type, maxWidth, item: hint, imageItemId: fetchId };
+    const skipFetch = hint && hint.Id === fetchId ? primaryImageKnownAbsent(hint) : false;
     if (skipFetch) {
       setUrl(null);
       return;
     }
-    const cached = peekArtworkObjectUrl(session, itemId, { type, maxWidth });
+    const cached = peekArtworkObjectUrl(session, itemId, opts);
     if (cached) {
       setUrl(cached);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const blobUrl = await getArtworkObjectUrl(session, itemId, { type, maxWidth });
+      const blobUrl = await getArtworkObjectUrl(session, itemId, opts);
       if (cancelled) return;
       setUrl(blobUrl);
       if (!blobUrl || skipColourAnalysis || !onColour || type !== "Primary") return;
@@ -89,9 +127,9 @@ export const ArtworkImage = memo(function ArtworkImage({
     return () => {
       cancelled = true;
     };
-  }, [session, itemId, type, maxWidth, onColour, skipColourAnalysis, skipFetch]);
+  }, [session, itemId, source, type, maxWidth, onColour, skipColourAnalysis]);
 
-  if (skipFetch || !url) {
+  if (!url) {
     return (
       <div
         className={

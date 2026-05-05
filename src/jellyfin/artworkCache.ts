@@ -6,8 +6,13 @@ const inFlight = new Map<string, Promise<string | null>>();
 const resolved = new Map<string, string>();
 const order: string[] = [];
 
-function cacheKey(session: JellyfinSession, itemId: string, type: string, maxWidth: number): string {
-  return `${session.serverUrl}|${itemId}|${type}|${maxWidth}`;
+function cacheKey(
+  session: JellyfinSession,
+  imageItemId: string,
+  type: string,
+  maxWidth: number
+): string {
+  return `${session.serverUrl}|${imageItemId}|${type}|${maxWidth}`;
 }
 
 function touch(key: string): void {
@@ -25,14 +30,22 @@ function touch(key: string): void {
   }
 }
 
+export type ArtworkFetchOptions = {
+  type?: "Primary" | "Backdrop";
+  maxWidth?: number;
+  item?: BaseItemDto;
+  imageItemId?: string;
+};
+
 export function getArtworkObjectUrl(
   session: JellyfinSession,
   itemId: string,
-  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number; item?: BaseItemDto }
+  options?: ArtworkFetchOptions
 ): Promise<string | null> {
   const type = options?.type ?? "Primary";
   const maxWidth = options?.maxWidth ?? 640;
-  const key = cacheKey(session, itemId, type, maxWidth);
+  const fetchId = options?.imageItemId ?? itemId;
+  const key = cacheKey(session, fetchId, type, maxWidth);
   const hit = resolved.get(key);
   if (hit) {
     touch(key);
@@ -41,9 +54,9 @@ export function getArtworkObjectUrl(
   let p = inFlight.get(key);
   if (!p) {
     p = (async () => {
-      const blob = await fetchImageBlob(session, itemId, type, maxWidth, {
-        item: options?.item
-      });
+      const metaItem =
+        options?.item && options.item.Id === fetchId ? options.item : undefined;
+      const blob = await fetchImageBlob(session, fetchId, type, maxWidth, { item: metaItem });
       if (!blob) return null;
       const url = URL.createObjectURL(blob);
       resolved.set(key, url);
@@ -60,11 +73,12 @@ export function getArtworkObjectUrl(
 export function peekArtworkObjectUrl(
   session: JellyfinSession,
   itemId: string,
-  options?: { type?: "Primary" | "Backdrop"; maxWidth?: number; item?: BaseItemDto }
+  options?: ArtworkFetchOptions
 ): string | null {
   const type = options?.type ?? "Primary";
   const maxWidth = options?.maxWidth ?? 640;
-  const key = cacheKey(session, itemId, type, maxWidth);
+  const fetchId = options?.imageItemId ?? itemId;
+  const key = cacheKey(session, fetchId, type, maxWidth);
   const u = resolved.get(key);
   if (u) touch(key);
   return u ?? null;

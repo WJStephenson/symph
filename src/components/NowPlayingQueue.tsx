@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { getAudioElement } from "@/audio/audioRef";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { WaveLineSeekBar } from "@/components/WaveLineSeekBar";
 import { formatDuration, queueCoverItem } from "@/lib/format";
@@ -24,7 +25,7 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
   const rowVirtualizer = useVirtualizer({
     count: queue.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 60,
+    estimateSize: () => 64,
     overscan: 8
   });
 
@@ -37,9 +38,18 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
 
   return (
     <section className="flex-1 min-h-0 flex flex-col min-w-0 bg-black/20">
-      <div className="shrink-0 px-4 py-3 border-b border-white/10">
-        <h2 className="text-sm font-medium text-white">Queue</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</p>
+      <div className="shrink-0 px-4 py-3 border-b border-white/10 flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-medium text-white">Queue</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</p>
+        </div>
+        {queue.length > 0 && (
+          <AddToPlaylistButton
+            session={session}
+            trackIds={queue.map((q) => q.id)}
+            className="rounded-lg px-2.5 py-1.5"
+          />
+        )}
       </div>
       <div ref={parentRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin contain-strict">
         <div
@@ -50,43 +60,50 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
             const q = queue[vi.index];
             if (!q) return null;
             const isActive = vi.index === activeIndex;
-            return (
-              <div
-                key={q.id}
-                className="absolute left-0 right-0 px-4"
-                style={{ transform: `translateY(${vi.start}px)` }}
-              >
-                <button
-                  type="button"
-                  onClick={() => playIndex(vi.index)}
-                  className={`w-full flex items-center gap-3 p-2 text-left rounded-xl transition-colors ${
-                    isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
-                  }`}
-                >
-                  <div className="text-xs text-zinc-500 w-7 tabular-nums shrink-0">{vi.index + 1}</div>
-                  <div className="size-10 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-800">
-                    <ArtworkImage
-                      session={session}
-                      itemId={q.albumId ?? q.id}
-                      item={queueCoverItem(q)}
-                      className="size-full object-cover"
-                      alt=""
-                      maxWidth={96}
-                      skipColourAnalysis
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm text-white truncate">{q.title}</div>
-                    <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
-                  </div>
-                  {q.durationTicks !== undefined && (
-                    <div className="text-xs text-zinc-500 tabular-nums shrink-0">
-                      {formatDuration(q.durationTicks / 10_000_000)}
+                return (
+                  <div
+                    key={q.id}
+                    className="absolute left-0 right-0 px-4"
+                    style={{ transform: `translateY(${vi.start}px)` }}
+                  >
+                    <div
+                      className={`flex items-stretch gap-1 rounded-xl ${
+                        isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => playIndex(vi.index)}
+                        className="flex flex-1 min-w-0 items-center gap-3 p-2 text-left"
+                      >
+                        <div className="text-xs text-zinc-500 w-7 tabular-nums shrink-0">{vi.index + 1}</div>
+                        <div className="size-10 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-800">
+                          <ArtworkImage
+                            session={session}
+                            itemId={q.albumId ?? q.id}
+                            item={queueCoverItem(q)}
+                            className="size-full object-cover"
+                            alt=""
+                            maxWidth={96}
+                            skipColourAnalysis
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm text-white truncate">{q.title}</div>
+                          <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
+                        </div>
+                        {q.durationTicks !== undefined && (
+                          <div className="text-xs text-zinc-500 tabular-nums shrink-0">
+                            {formatDuration(q.durationTicks / 10_000_000)}
+                          </div>
+                        )}
+                      </button>
+                      <div className="flex items-center pr-1 shrink-0">
+                        <AddToPlaylistButton session={session} trackIds={[q.id]} variant="icon" />
+                      </div>
                     </div>
-                  )}
-                </button>
-              </div>
-            );
+                  </div>
+                );
           })}
         </div>
       </div>

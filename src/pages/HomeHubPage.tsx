@@ -10,6 +10,7 @@ import {
   fetchTopArtists
 } from "@/jellyfin/musicHome";
 import { ArtworkImage } from "@/components/ArtworkImage";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
@@ -265,32 +266,44 @@ export function HomeHubPage() {
             </div>
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
               {hub.recentTracks.map((tr, i) => (
-                <button
+                <div
                   key={tr.Id}
-                  type="button"
-                  onClick={() => playRecentFrom(i)}
-                  className="shrink-0 w-44 rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden text-left hover:border-indigo-400/35 transition"
+                  className="shrink-0 w-44 rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden hover:border-indigo-400/35 transition relative"
                 >
-                  <div className="aspect-square relative">
-                    <ArtworkImage
+                  <button
+                    type="button"
+                    onClick={() => playRecentFrom(i)}
+                    className="w-full text-left"
+                  >
+                    <div className="aspect-square relative">
+                      <ArtworkImage
+                        session={session}
+                        itemId={tr.ParentId ?? tr.Id}
+                        item={tr}
+                        className="w-full h-full object-cover"
+                        alt=""
+                        maxWidth={220}
+                      />
+                    </div>
+                    <div className="p-2.5">
+                      <div className="text-xs text-white font-medium line-clamp-2">{tr.Name}</div>
+                      <div className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">{artistName(tr)}</div>
+                      {tr.RunTimeTicks != null && (
+                        <div className="text-[10px] text-zinc-600 mt-1 tabular-nums">
+                          {formatDuration(ticksToSec(tr.RunTimeTicks))}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                  <div className="absolute top-2 right-2 z-10">
+                    <AddToPlaylistButton
                       session={session}
-                      itemId={tr.ParentId ?? tr.Id}
-                      item={tr}
-                      className="w-full h-full object-cover"
-                      alt=""
-                      maxWidth={220}
+                      trackIds={[tr.Id]}
+                      variant="icon"
+                      className="bg-black/50 border-white/20 backdrop-blur-sm"
                     />
                   </div>
-                  <div className="p-2.5">
-                    <div className="text-xs text-white font-medium line-clamp-2">{tr.Name}</div>
-                    <div className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">{artistName(tr)}</div>
-                    {tr.RunTimeTicks != null && (
-                      <div className="text-[10px] text-zinc-600 mt-1 tabular-nums">
-                        {formatDuration(ticksToSec(tr.RunTimeTicks))}
-                      </div>
-                    )}
-                  </div>
-                </button>
+                </div>
               ))}
             </div>
           </section>

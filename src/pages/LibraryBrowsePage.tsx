@@ -4,6 +4,7 @@ import { fetchAllAudioUnderParent, fetchItem, fetchItems } from "@/jellyfin/clie
 import type { BaseItemDto } from "@/jellyfin/types";
 import { artistName, toQueueTrack } from "@/lib/format";
 import { ArtworkImage } from "@/components/ArtworkImage";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
@@ -244,32 +245,44 @@ export function LibraryBrowsePage() {
           }
           if (item.Type === "Audio") {
             return (
-              <button
+              <div
                 key={item.Id}
-                type="button"
-                onClick={() => {
-                  const q = [toQueueTrack(item)];
-                  setQueue(q, 0);
-                  queueMicrotask(() => {
-                    void getAudioElement()?.play();
-                  });
-                }}
-                className="text-left rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden hover:border-indigo-400/40 transition"
+                className="text-left rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden hover:border-indigo-400/40 transition relative"
               >
-                <div className="aspect-square">
-                  <ArtworkImage
+                <button
+                  type="button"
+                  onClick={() => {
+                    const q = [toQueueTrack(item)];
+                    setQueue(q, 0);
+                    queueMicrotask(() => {
+                      void getAudioElement()?.play();
+                    });
+                  }}
+                  className="w-full"
+                >
+                  <div className="aspect-square">
+                    <ArtworkImage
+                      session={session}
+                      itemId={item.ParentId ?? item.Id}
+                      className="w-full h-full object-cover"
+                      alt=""
+                      maxWidth={360}
+                    />
+                  </div>
+                  <div className="p-3">
+                    <div className="text-sm text-white font-medium truncate">{item.Name}</div>
+                    <div className="text-xs text-zinc-500 truncate">{artistName(item)}</div>
+                  </div>
+                </button>
+                <div className="absolute top-2 right-2 z-10">
+                  <AddToPlaylistButton
                     session={session}
-                    itemId={item.ParentId ?? item.Id}
-                    className="w-full h-full object-cover"
-                    alt=""
-                    maxWidth={360}
+                    trackIds={[item.Id]}
+                    variant="icon"
+                    className="bg-black/50 border-white/20 backdrop-blur-sm"
                   />
                 </div>
-                <div className="p-3">
-                  <div className="text-sm text-white font-medium truncate">{item.Name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{artistName(item)}</div>
-                </div>
-              </button>
+              </div>
             );
           }
           return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchAlbumTracks, fetchItem } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
@@ -79,6 +80,11 @@ export function AlbumPage() {
               >
                 Shuffle
               </button>
+              <AddToPlaylistButton
+                session={session}
+                trackIds={tracks.map((t) => t.Id)}
+                className="flex-1 rounded-2xl border border-white/15 py-3 text-sm"
+              />
             </div>
           </div>
           <div className="min-w-0">
@@ -94,22 +100,31 @@ export function AlbumPage() {
                   ? formatDuration(ticksToSec(tr.UserData.PlaybackPositionTicks))
                   : null;
                 return (
-                  <button
+                  <div
                     key={tr.Id}
-                    type="button"
-                    onClick={() => playAll(i)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-white/5 transition"
+                    className="flex items-stretch gap-1 hover:bg-white/5 transition group"
                   >
-                    <div className="text-xs text-zinc-500 w-6 tabular-nums">{tr.IndexNumber ?? i + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white truncate">{tr.Name}</div>
-                      <div className="text-xs text-zinc-500 truncate">{artistName(tr)}</div>
+                    <button
+                      type="button"
+                      onClick={() => playAll(i)}
+                      className="flex flex-1 min-w-0 items-center gap-4 px-4 py-3 text-left"
+                    >
+                      <div className="text-xs text-zinc-500 w-6 tabular-nums shrink-0">
+                        {tr.IndexNumber ?? i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-white truncate">{tr.Name}</div>
+                        <div className="text-xs text-zinc-500 truncate">{artistName(tr)}</div>
+                      </div>
+                      <div className="text-xs text-zinc-500 tabular-nums shrink-0 flex flex-col items-end">
+                        <span>{dur}</span>
+                        {resume && <span className="text-indigo-300/90">{resume}</span>}
+                      </div>
+                    </button>
+                    <div className="flex items-center pr-2 shrink-0">
+                      <AddToPlaylistButton session={session} trackIds={[tr.Id]} variant="icon" />
                     </div>
-                    <div className="text-xs text-zinc-500 tabular-nums shrink-0 flex flex-col items-end">
-                      <span>{dur}</span>
-                      {resume && <span className="text-indigo-300/90">{resume}</span>}
-                    </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

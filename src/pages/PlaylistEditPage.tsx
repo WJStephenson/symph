@@ -9,6 +9,7 @@ import {
 } from "@/jellyfin/playlists";
 import { fetchItem, fetchItems } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
@@ -150,6 +151,8 @@ export function PlaylistEditPage() {
     queueMicrotask(() => void getAudioElement()?.play());
   };
 
+  const allTrackIds = tracks.map((t) => t.Id).filter(Boolean);
+
   return (
     <div className="space-y-8 pt-2 md:pt-6 max-w-2xl">
       <Link to="/playlists" className="text-sm text-zinc-500 hover:text-white">
@@ -185,7 +188,7 @@ export function PlaylistEditPage() {
             Delete playlist
           </button>
         </div>
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
           <button
             type="button"
             disabled={busy || !tracks.length}
@@ -194,6 +197,14 @@ export function PlaylistEditPage() {
           >
             Play
           </button>
+          {allTrackIds.length > 0 && (
+            <AddToPlaylistButton
+              session={session}
+              trackIds={allTrackIds}
+              className="rounded-xl border border-white/15 px-4 py-2.5 text-sm"
+              onAdded={() => void loadTracks()}
+            />
+          )}
         </div>
       </div>
       <div className="rounded-3xl border border-white/10 bg-zinc-900/40 p-6 space-y-3">
@@ -207,29 +218,34 @@ export function PlaylistEditPage() {
         {addResults.length > 0 && (
           <div className="rounded-xl border border-white/10 divide-y divide-white/5 max-h-60 overflow-y-auto">
             {addResults.map((tr) => (
-              <button
+              <div
                 key={tr.Id}
-                type="button"
-                disabled={busy}
-                onClick={() => void addTrack(tr)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 disabled:opacity-40"
+                className="flex items-center gap-2 px-2 py-2 hover:bg-white/5"
               >
-                <div className="size-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
-                  <ArtworkImage
-                    session={session}
-                    itemId={tr.ParentId ?? tr.Id}
-                    item={tr}
-                    className="size-full object-cover"
-                    alt=""
-                    maxWidth={96}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm text-white truncate">{tr.Name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{artistName(tr)}</div>
-                </div>
-                <span className="text-xs text-indigo-300 shrink-0">Add</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void addTrack(tr)}
+                  className="flex flex-1 min-w-0 items-center gap-3 text-left disabled:opacity-40"
+                >
+                  <div className="size-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                    <ArtworkImage
+                      session={session}
+                      itemId={tr.ParentId ?? tr.Id}
+                      item={tr}
+                      className="size-full object-cover"
+                      alt=""
+                      maxWidth={96}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-white truncate">{tr.Name}</div>
+                    <div className="text-xs text-zinc-500 truncate">{artistName(tr)}</div>
+                  </div>
+                  <span className="text-xs text-indigo-300 shrink-0">Add here</span>
+                </button>
+                <AddToPlaylistButton session={session} trackIds={[tr.Id]} variant="icon" />
+              </div>
             ))}
           </div>
         )}
@@ -243,12 +259,12 @@ export function PlaylistEditPage() {
             return (
               <div
                 key={`${tr.Id}-${entryId}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5"
+                className="flex items-stretch gap-1 hover:bg-white/5"
               >
                 <button
                   type="button"
                   onClick={() => playAll(i)}
-                  className="flex flex-1 min-w-0 items-center gap-3 text-left"
+                  className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3 text-left"
                 >
                   <span className="text-xs text-zinc-500 w-6 tabular-nums shrink-0">{i + 1}</span>
                   <div className="min-w-0 flex-1">
@@ -257,14 +273,17 @@ export function PlaylistEditPage() {
                   </div>
                   <span className="text-xs text-zinc-500 tabular-nums shrink-0">{dur}</span>
                 </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void removeTrack(entryId)}
-                  className="shrink-0 text-xs text-rose-300/90 hover:text-rose-200 px-2 py-1 disabled:opacity-40"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-1 pr-2 shrink-0">
+                  <AddToPlaylistButton session={session} trackIds={[tr.Id]} variant="icon" />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void removeTrack(entryId)}
+                    className="text-xs text-rose-300/90 hover:text-rose-200 px-2 py-2 disabled:opacity-40"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             );
           })}

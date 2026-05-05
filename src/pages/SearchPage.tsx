@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { fetchItems } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { artistName } from "@/lib/format";
 import { useServerStore } from "@/state/serverStore";
@@ -120,26 +121,31 @@ export function SearchPage() {
           }
           if (item.Type === "Audio") {
             return (
-              <Link
+              <div
                 key={item.Id}
-                to={item.ParentId ? `/album/${item.ParentId}` : "/libraries"}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 p-3 hover:border-indigo-400/40 transition"
+                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 p-2 pl-3 hover:border-indigo-400/40 transition"
               >
-                <div className="size-12 rounded-xl overflow-hidden border border-white/10 shrink-0">
-                  <ArtworkImage
-                    session={session}
-                    itemId={item.ParentId ?? item.Id}
-                    item={item}
-                    className="size-full object-cover"
-                    alt=""
-                    maxWidth={160}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm text-white font-medium truncate">{item.Name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{artistName(item)}</div>
-                </div>
-              </Link>
+                <Link
+                  to={item.ParentId ? `/album/${item.ParentId}` : "/libraries"}
+                  className="flex flex-1 min-w-0 items-center gap-3 py-1"
+                >
+                  <div className="size-12 rounded-xl overflow-hidden border border-white/10 shrink-0">
+                    <ArtworkImage
+                      session={session}
+                      itemId={item.ParentId ?? item.Id}
+                      item={item}
+                      className="size-full object-cover"
+                      alt=""
+                      maxWidth={160}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-white font-medium truncate">{item.Name}</div>
+                    <div className="text-xs text-zinc-500 truncate">{artistName(item)}</div>
+                  </div>
+                </Link>
+                <AddToPlaylistButton session={session} trackIds={[item.Id]} variant="icon" />
+              </div>
             );
           }
           return null;

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
+import { SymphMark } from "@/components/SymphMark";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { usePlayerStore } from "@/state/playerStore";
@@ -100,10 +101,10 @@ export function ShellLayout() {
       </nav>
       <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
         <button type="button" onClick={() => navigate("/")} className="mx-3 mt-4 mb-6 text-left shrink-0 w-full">
-          <div className="block group-hover/sidebar:hidden">
-            <div className="font-display text-lg text-white w-10 text-center mx-auto">S</div>
+          <div className="flex justify-center group-hover/sidebar:justify-start">
+            <SymphMark className="size-10 shrink-0" />
           </div>
-          <div className="hidden group-hover/sidebar:block">
+          <div className="hidden group-hover/sidebar:block mt-2 pl-0.5">
             <div className="font-display text-xl tracking-tight text-white">Symph</div>
           </div>
         </button>

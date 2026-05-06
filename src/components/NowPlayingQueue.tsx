@@ -131,12 +131,10 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
                 style={{ transform: `translateY(${vi.start}px)` }}
               >
                 <div
-                  className={`flex items-stretch gap-1 rounded-xl ${
-                    isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
+                  className={`flex items-stretch gap-1 rounded-xl border ${
+                    isActive ? "bg-white/[0.07]" : "border-transparent hover:bg-white/5"
                   }`}
-                  style={
-                    isActive ? { boxShadow: `inset 3px 0 0 ${theme.fill}` } : undefined
-                  }
+                  style={isActive ? { borderColor: theme.fill } : undefined}
                 >
                   <button
                     type="button"

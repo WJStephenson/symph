@@ -1,6 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
+import { WaveLineSeekBar } from "@/components/WaveLineSeekBar";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { queueCoverItem } from "@/lib/format";
@@ -15,25 +16,6 @@ type Props = {
   onOpen: () => void;
   onClose: () => void;
 };
-
-const SheetProgressRail = memo(function SheetProgressRail({ open }: { open: boolean }) {
-  const accent = usePlayerStore((s) => s.accent);
-  const positionSec = usePlayerStore((s) => s.positionSec);
-  const durationSec = usePlayerStore((s) => s.durationSec);
-  const theme = useMemo(() => accentTheme(accent), [accent]);
-  const pct = durationSec > 0 ? Math.min(100, (positionSec / durationSec) * 100) : 0;
-  return (
-    <div
-      className={`h-[3px] symph-tone-transition shrink-0 ${open ? "max-md:hidden" : ""}`}
-      style={{ backgroundColor: theme.progressTrack }}
-    >
-      <div
-        className="h-full symph-tone-transition"
-        style={{ width: `${pct}%`, backgroundColor: theme.progress }}
-      />
-    </div>
-  );
-});
 
 export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const session = useServerStore((s) => s.session);
@@ -60,6 +42,12 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       else onOpen();
     });
   }, [open, onOpen, onClose]);
+
+  const onSeek = useCallback((sec: number) => {
+    const el = getAudioElement();
+    if (!el) return;
+    el.currentTime = sec;
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -145,7 +133,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             </div>
           </div>
         )}
-        <SheetProgressRail open={open} />
+        {!open ? (
+          <WaveLineSeekBar onSeek={onSeek} accent={accent} minimal height={14} />
+        ) : null}
         {open ? (
           <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
             <PlayerLeftColumn

@@ -99,7 +99,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             />
           </div>
         ) : null}
-        <div className="flex items-center gap-3 p-2.5 shrink-0">
+        <div className="flex items-center gap-3 p-2.5 shrink-0 backdrop-blur-[10px]">
           <button
             type="button"
             onClick={toggleExpanded}

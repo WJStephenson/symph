@@ -47,8 +47,6 @@ export function ShellLayout() {
 
   const closeSheet = () => setSheetOpen(false);
 
-  const expandGutter = "max(calc(1rem + var(--safe-top)), calc(1rem + var(--safe-bottom)), calc(4.25rem + var(--safe-bottom)))";
-
   const shellVars = {
     ["--symph-tone"]: theme.fill,
     ["--symph-accent"]: theme.fill,
@@ -58,9 +56,7 @@ export function ShellLayout() {
     ["--symph-bottom-wash"]: [
       `radial-gradient(95% 55% at 50% 100%, color-mix(in srgb, var(--symph-tone) 18%, transparent) 0%, transparent 72%)`,
       `linear-gradient(180deg, transparent 0%, transparent 42%, color-mix(in srgb, var(--symph-tone) 10%, transparent) 100%)`
-    ].join(", "),
-    ["--symph-player-expand-top"]: expandGutter,
-    ["--symph-player-expand-bottom"]: expandGutter
+    ].join(", ")
   } as CSSProperties;
 
   return (

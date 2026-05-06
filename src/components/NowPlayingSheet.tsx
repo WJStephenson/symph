@@ -61,11 +61,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   return (
     <div
       className="max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0"
-      style={{
-        maxHeight: open
-          ? "calc(100svh - var(--symph-player-expand-top) - var(--symph-player-expand-bottom))"
-          : undefined
-      }}
+      style={open ? { height: "90dvh", maxHeight: "90dvh" } : undefined}
     >
       <div
         className={`glass rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${

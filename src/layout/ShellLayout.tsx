@@ -82,8 +82,8 @@ export function ShellLayout() {
         </main>
       </div>
       {showPlayer && (
-        <div className="fixed left-0 right-0 z-40 top-[var(--symph-player-expand-top)] bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none">
-          <div className="pointer-events-auto min-h-0 w-full max-w-6xl mx-auto flex-1 flex flex-col justify-end">
+        <div className="fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none">
+          <div className="pointer-events-none w-full max-w-6xl mx-auto shrink-0 flex flex-col justify-end">
             <NowPlayingSheet open={sheetOpen} onOpen={openSheet} onClose={closeSheet} />
           </div>
         </div>

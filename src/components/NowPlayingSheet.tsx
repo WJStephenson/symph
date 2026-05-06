@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
 import { accentTheme } from "@/lib/accentTheme";
-import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { queueCoverItem } from "@/lib/format";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
@@ -40,10 +39,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     !open && durationSec > 0 ? Math.min(1, Math.max(0, positionSec / durationSec)) : 0;
 
   const toggleExpanded = useCallback(() => {
-    startViewTransitionIfSupported(() => {
-      if (open) onClose();
-      else onOpen();
-    });
+    if (open) onClose();
+    else onOpen();
   }, [open, onOpen, onClose]);
 
   useEffect(() => {
@@ -63,7 +60,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   return (
     <div
-      className={`max-w-6xl mx-auto w-full flex flex-col min-h-0 ${open ? "flex-1" : "shrink-0"}`}
+      className="max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0"
       style={{
         maxHeight: open
           ? "calc(100svh - var(--symph-player-expand-top) - var(--symph-player-expand-bottom))"
@@ -71,76 +68,80 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       }}
     >
       <div
-        className={`glass rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden ${
-          open ? "shadow-2xl flex-1 min-h-0" : ""
+        className={`glass rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
+          open ? "shadow-2xl min-h-0" : ""
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
-        {open && (
-          <div className="flex max-h-[min(42svh,360px)] md:max-h-none flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
-            <div className="flex-1 min-h-0 flex flex-col min-h-[100px]">
-              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {queueAccordionOpen ? (
-                  <VirtualizedQueue
-                    key={queueKey}
-                    session={session}
-                    queue={queue}
-                    activeIndex={index}
-                    dense
-                    hideHeader
-                  />
-                ) : (
-                  <div className="flex-1 min-h-0 flex items-center justify-center p-3 md:p-5">
-                    <PlayerHeroArtwork
+        <div
+          className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
+            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden flex flex-col" inert={!open ? true : undefined}>
+            <div className="flex max-h-[min(42svh,360px)] md:max-h-none flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
+              <div className={`flex-1 min-h-0 flex flex-col ${open ? "min-h-[100px]" : "min-h-0"}`}>
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  {queueAccordionOpen ? (
+                    <VirtualizedQueue
+                      key={queueKey}
                       session={session}
-                      track={track}
-                      morphTransition
-                      layout="dock"
+                      queue={queue}
+                      activeIndex={index}
+                      dense
+                      hideHeader
                     />
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                aria-expanded={queueAccordionOpen}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setQueueAccordionOpen((v) => !v);
-                }}
-                className="shrink-0 flex w-full items-center gap-2 border-t border-white/10 bg-black/30 px-3 py-2.5 md:px-4 text-left hover:bg-white/[0.04] transition-colors"
-              >
-                <span
-                  className={`text-zinc-400 shrink-0 transition-transform duration-200 ${
-                    queueAccordionOpen ? "rotate-180" : ""
-                  }`}
+                  ) : (
+                    <div className="flex-1 min-h-0 flex items-center justify-center p-3 md:p-5">
+                      <PlayerHeroArtwork
+                        session={session}
+                        track={track}
+                        morphTransition
+                        layout="dock"
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  aria-expanded={queueAccordionOpen}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQueueAccordionOpen((v) => !v);
+                  }}
+                  className="shrink-0 flex w-full items-center gap-2 border-t border-white/10 bg-black/30 px-3 py-2.5 md:px-4 text-left hover:bg-white/[0.04] transition-colors"
                 >
-                  <ChevronDownGlyph />
-                </span>
-                <span className="text-sm font-medium text-white">Queue</span>
-                <span className="text-xs text-zinc-500 tabular-nums">{queue.length} tracks</span>
-                <span className="flex-1 min-w-2" />
-                {queue.length > 0 ? (
-                  <AddToPlaylistButton
-                    session={session}
-                    trackIds={queue.map((q) => q.id)}
-                    className="rounded-lg px-2.5 py-1.5"
-                  />
-                ) : null}
-              </button>
+                  <span
+                    className={`text-zinc-400 shrink-0 transition-transform duration-200 ${
+                      queueAccordionOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <ChevronDownGlyph />
+                  </span>
+                  <span className="text-sm font-medium text-white">Queue</span>
+                  <span className="text-xs text-zinc-500 tabular-nums">{queue.length} tracks</span>
+                  <span className="flex-1 min-w-2" />
+                  {queue.length > 0 ? (
+                    <AddToPlaylistButton
+                      session={session}
+                      trackIds={queue.map((q) => q.id)}
+                      className="rounded-lg px-2.5 py-1.5"
+                    />
+                  ) : null}
+                </button>
+              </div>
+            </div>
+            <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
+              <PlayerLeftColumn
+                session={session}
+                track={track}
+                morphTransition
+                variant="dockExpanded"
+                hideArtwork
+              />
             </div>
           </div>
-        )}
-        {open ? (
-          <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
-            <PlayerLeftColumn
-              session={session}
-              track={track}
-              morphTransition
-              variant="dockExpanded"
-              hideArtwork
-            />
-          </div>
-        ) : null}
+        </div>
         <div
           className={`relative flex items-center gap-3 p-2.5 shrink-0 overflow-hidden backdrop-blur-[10px] ${
             !open ? "rounded-b-2xl" : ""

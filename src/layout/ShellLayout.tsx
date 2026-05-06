@@ -105,13 +105,13 @@ export function ShellLayout() {
         </div>
       </nav>
       <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
-        <button type="button" onClick={() => navigate("/")} className="mx-3 mt-4 mb-6 text-left shrink-0 w-full">
-          <div className="flex justify-center group-hover/sidebar:justify-start">
-            <SymphMark className="size-10 shrink-0" />
-          </div>
-          <div className="hidden group-hover/sidebar:block mt-2 pl-0.5">
-            <div className="font-display text-xl tracking-tight text-white">Symph</div>
-          </div>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="mx-3 mt-4 mb-6 flex justify-center shrink-0 w-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          aria-label="Home"
+        >
+          <SymphMark className="size-10 shrink-0" />
         </button>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
           <SideLink to="/" label="Home" icon={HomeIcon} />

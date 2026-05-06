@@ -104,32 +104,18 @@ export function HomeHubPage() {
     queueMicrotask(() => void getAudioElement()?.play());
   };
 
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  }, []);
-
   if (!session) return null;
 
   if (!libraryId) {
     return (
       <div className="space-y-8 pt-2 md:pt-6 max-w-lg">
         <header>
-          <p className="text-sm text-zinc-500">{greeting}</p>
-          <h1 className="font-display text-3xl md:text-4xl text-white mt-1">{session.userName}</h1>
+          <h1 className="font-display text-3xl md:text-4xl text-white">{session.userName}</h1>
         </header>
-        <div className="rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center space-y-4">
+        <div className="rounded-3xl border border-white/10 bg-zinc-900/50 p-8 text-center">
           <p className="text-zinc-300 text-sm leading-relaxed">
             Choose your music library in Settings so Symph can show your home feed and mixes.
           </p>
-          <Link
-            to="/settings"
-            className="inline-flex rounded-2xl bg-white text-zinc-900 font-medium px-6 py-3 text-sm"
-          >
-            Open settings
-          </Link>
         </div>
       </div>
     );
@@ -137,25 +123,8 @@ export function HomeHubPage() {
 
   return (
     <div className="space-y-10 pt-2 md:pt-6 pb-4">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="hidden md:block text-sm text-zinc-500">{greeting}</p>
-          <h1 className="font-display text-3xl md:text-4xl text-white md:mt-1">Home</h1>
-        </div>
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to={`/library/${libraryId}`}
-            className="text-xs uppercase tracking-widest text-zinc-500 hover:text-white transition"
-          >
-            Browse library
-          </Link>
-          <Link
-            to="/settings"
-            className="text-xs uppercase tracking-widest text-zinc-500 hover:text-white transition"
-          >
-            Settings
-          </Link>
-        </div>
+      <header>
+        <h1 className="font-display text-3xl md:text-4xl text-white">Home</h1>
       </header>
 
       <div className="flex md:hidden gap-2">

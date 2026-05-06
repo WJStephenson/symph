@@ -62,23 +62,26 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   return (
     <div
       className={`max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0 ${
-        open ? "h-full max-h-full" : ""
+        open ? "h-full max-h-full min-h-0 overflow-hidden flex flex-col" : ""
       }`}
     >
       <div
         className={`rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
-          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1" : "glass"
+          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full" : "glass"
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
         <div
           className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
-            open ? "grid-rows-[1fr] flex-1 min-h-0" : "grid-rows-[0fr]"
+            open ? "grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden" : "grid-rows-[0fr]"
           }`}
         >
-          <div className="min-h-0 overflow-hidden flex flex-col h-full" inert={!open ? true : undefined}>
-            <div className="flex flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
-              <div className="flex-1 min-h-0 flex flex-col">
+          <div
+            className="min-h-0 max-h-full overflow-hidden flex flex-col h-full"
+            inert={!open ? true : undefined}
+          >
+            <div className="flex flex-1 min-h-0 flex-col overflow-hidden border-b border-white/10 bg-black/25">
+              <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                   {queueAccordionOpen ? (
                     <VirtualizedQueue
@@ -129,7 +132,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 </button>
               </div>
             </div>
-            <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
+            <div className="shrink-0 mt-auto px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
               <PlayerLeftColumn
                 session={session}
                 track={track}

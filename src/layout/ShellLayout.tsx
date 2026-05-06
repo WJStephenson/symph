@@ -6,7 +6,6 @@ import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { SymphMark } from "@/components/SymphMark";
 import { ToastHost } from "@/components/ToastHost";
 import { accentTheme } from "@/lib/accentTheme";
-import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
@@ -45,13 +44,9 @@ export function ShellLayout() {
 
   const showPlayer = queueLen > 0;
 
-  const openSheet = () => {
-    startViewTransitionIfSupported(() => setSheetOpen(true));
-  };
+  const openSheet = () => setSheetOpen(true);
 
-  const closeSheet = () => {
-    startViewTransitionIfSupported(() => setSheetOpen(false));
-  };
+  const closeSheet = () => setSheetOpen(false);
 
   const expandGutter = "max(calc(1rem + var(--safe-top)), calc(1rem + var(--safe-bottom)), calc(4.25rem + var(--safe-bottom)))";
 
@@ -88,12 +83,8 @@ export function ShellLayout() {
         </main>
       </div>
       {showPlayer && (
-        <div
-          className={`fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none ${
-            sheetOpen ? "top-[var(--symph-player-expand-top)]" : ""
-          }`}
-        >
-          <div className={`pointer-events-auto min-h-0 ${sheetOpen ? "flex-1 flex flex-col justify-end" : ""}`}>
+        <div className="fixed left-0 right-0 z-40 top-[var(--symph-player-expand-top)] bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none">
+          <div className="pointer-events-auto min-h-0 w-full max-w-6xl mx-auto flex-1 flex flex-col justify-end">
             <NowPlayingSheet open={sheetOpen} onOpen={openSheet} onClose={closeSheet} />
           </div>
         </div>
@@ -114,13 +105,13 @@ export function ShellLayout() {
         </div>
       </nav>
       <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
-        <button type="button" onClick={() => navigate("/")} className="mx-3 mt-4 mb-6 text-left shrink-0 w-full">
-          <div className="flex justify-center group-hover/sidebar:justify-start">
-            <SymphMark className="size-10 shrink-0" />
-          </div>
-          <div className="hidden group-hover/sidebar:block mt-2 pl-0.5">
-            <div className="font-display text-xl tracking-tight text-white">Symph</div>
-          </div>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="mx-3 mt-4 mb-6 flex justify-center shrink-0 w-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          aria-label="Home"
+        >
+          <SymphMark className="size-10 shrink-0" />
         </button>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
           <SideLink to="/" label="Home" icon={HomeIcon} />

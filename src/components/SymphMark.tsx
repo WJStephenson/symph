@@ -14,9 +14,9 @@ export function SymphMark({ className = "" }: Props) {
       <circle cx="16" cy="16" r="16" fill="#000000" />
       <text
         x="16"
-        y="22.5"
+        y="16"
         textAnchor="middle"
-        dominantBaseline="middle"
+        dominantBaseline="central"
         fill="#ffffff"
         style={{ fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif", fontSize: "17px", fontWeight: 700 }}
       >

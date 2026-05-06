@@ -61,7 +61,6 @@ export const PlayerHeroArtwork = memo(function PlayerHeroArtwork({
         className="relative z-10 w-full h-full object-cover"
         alt=""
         maxWidth={dock ? 640 : 900}
-        priority
         skipColourAnalysis
       />
     </div>

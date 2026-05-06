@@ -88,7 +88,7 @@ export function ShellLayout() {
         <button
           type="button"
           aria-label="Dismiss now playing"
-          className="fixed inset-0 z-[35] bg-black/50 backdrop-blur-[1px] md:left-[var(--symph-sidebar-w)]"
+          className="fixed inset-0 z-[35] bg-black/50 md:left-[var(--symph-sidebar-w)]"
           onClick={closeSheet}
         />
       )}
@@ -99,7 +99,11 @@ export function ShellLayout() {
           ))}
         </div>
       </nav>
-      <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
+      <aside
+        className={`group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden ${
+          sheetOpen ? "z-[45]" : "z-30"
+        }`}
+      >
         <div className="shrink-0 px-2 mt-4 mb-6">
           <div className="flex w-full min-w-0 items-center gap-3 py-2 pl-2 pr-3 text-sm text-zinc-400">
             <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center text-white" aria-hidden>

@@ -64,8 +64,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       style={open ? { height: "90dvh", maxHeight: "90dvh" } : undefined}
     >
       <div
-        className={`glass rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
-          open ? "shadow-2xl min-h-0" : ""
+        className={`rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
+          open ? "bg-zinc-950/[0.96] shadow-2xl min-h-0" : "glass"
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
@@ -139,7 +139,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           </div>
         </div>
         <div
-          className={`relative flex items-center gap-3 p-2.5 shrink-0 overflow-hidden backdrop-blur-[10px] ${
+          className={`relative flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
             !open ? "rounded-b-2xl" : ""
           }`}
         >
@@ -248,7 +248,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               theme={theme}
               variant="mini"
               morphTransition
-              triggerClassName={!open ? "bg-black/55 backdrop-blur-md border border-white/15 shadow-sm" : undefined}
+              triggerClassName={!open ? "bg-black/70 border border-white/15 shadow-sm" : undefined}
             />
           </div>
         </div>
@@ -289,7 +289,7 @@ function MiniGhostButton({
         ? "border border-white/20 ring-1 ring-black/30"
         : ""
       : controlPlate
-        ? "text-zinc-100 border border-white/15 bg-black/55 backdrop-blur-md shadow-sm hover:bg-white/12"
+        ? "text-zinc-100 border border-white/15 bg-black/70 shadow-sm hover:bg-white/12"
         : "text-zinc-200 hover:bg-white/10"
   ]
     .filter(Boolean)
@@ -335,7 +335,7 @@ function IconButton({
     primary
       ? `size-11 bg-white text-zinc-900 shadow-lg${controlPlate ? " ring-2 ring-black/45 shadow-xl" : ""}`
       : controlPlate
-        ? "size-9 text-zinc-100 border border-white/15 bg-black/55 backdrop-blur-md shadow-sm hover:bg-white/12"
+        ? "size-9 text-zinc-100 border border-white/15 bg-black/70 shadow-sm hover:bg-white/12"
         : "size-9 text-zinc-200 hover:bg-white/10"
   ].join(" ");
   return (

@@ -13,7 +13,6 @@ type Props = {
   type?: "Primary" | "Backdrop";
   maxWidth?: number;
   onColour?: (hex: string) => void;
-  priority?: boolean;
   skipColourAnalysis?: boolean;
 };
 
@@ -31,7 +30,6 @@ export const ArtworkImage = memo(function ArtworkImage({
   type = "Primary",
   maxWidth = 640,
   onColour,
-  priority = false,
   skipColourAnalysis = false
 }: Props) {
   const [source, setSource] = useState<ImageSource | null>(null);
@@ -145,9 +143,9 @@ export const ArtworkImage = memo(function ArtworkImage({
       src={url}
       alt={alt ?? ""}
       className={className}
-      loading={priority ? "eager" : "lazy"}
+      loading="lazy"
       decoding="async"
-      fetchPriority={priority ? "high" : "low"}
+      fetchPriority="low"
     />
   );
 });

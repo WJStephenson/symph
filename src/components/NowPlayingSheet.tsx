@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
 import { accentTheme } from "@/lib/accentTheme";
@@ -32,11 +32,45 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const durationSec = usePlayerStore((s) => s.durationSec);
 
   const [queueAccordionOpen, setQueueAccordionOpen] = useState(false);
+  const [scrubDragging, setScrubDragging] = useState(false);
+  const [scrubLocalSec, setScrubLocalSec] = useState(0);
+  const dockTimelineRef = useRef<HTMLDivElement>(null);
 
   const track = queue[index];
   const queueKey = useMemo(() => queue.map((q) => q.id).join("\0"), [queue]);
-  const timelineProgress =
-    durationSec > 0 ? Math.min(1, Math.max(0, positionSec / durationSec)) : 0;
+
+  useEffect(() => {
+    if (!scrubDragging) setScrubLocalSec(positionSec);
+  }, [positionSec, scrubDragging]);
+
+  const displayProgress =
+    durationSec > 0 ? Math.min(1, Math.max(0, (scrubDragging ? scrubLocalSec : positionSec) / durationSec)) : 0;
+
+  const setDockTimelineFromClientX = useCallback(
+    (clientX: number) => {
+      const wrap = dockTimelineRef.current;
+      if (!wrap || durationSec <= 0) return;
+      const rect = wrap.getBoundingClientRect();
+      const x = Math.min(Math.max(0, clientX - rect.left), rect.width);
+      const next = (x / rect.width) * durationSec;
+      setScrubLocalSec(next);
+      const el = getAudioElement();
+      if (el) el.currentTime = next;
+    },
+    [durationSec]
+  );
+
+  useEffect(() => {
+    if (!scrubDragging) return;
+    const onMove = (e: PointerEvent) => setDockTimelineFromClientX(e.clientX);
+    const onUp = () => setScrubDragging(false);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [scrubDragging, setDockTimelineFromClientX]);
 
   const toggleExpanded = useCallback(() => {
     if (open) onClose();
@@ -54,7 +88,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   useEffect(() => {
     if (open) setQueueAccordionOpen(true);
-    else setQueueAccordionOpen(false);
+    else {
+      setQueueAccordionOpen(false);
+      setScrubDragging(false);
+    }
   }, [open]);
 
   if (!session || !track) return null;
@@ -135,8 +172,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           </div>
         </div>
         <div
+          ref={dockTimelineRef}
           className={`relative shrink-0 flex flex-col overflow-hidden ${
-            open ? "rounded-t-2xl" : "rounded-b-2xl"
+            open ? "" : "rounded-b-2xl"
           }`}
         >
           {durationSec > 0 ? (
@@ -145,7 +183,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               <div
                 className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
                 style={{
-                  width: `${timelineProgress * 100}%`,
+                  width: `${displayProgress * 100}%`,
                   background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
                 }}
                 aria-hidden
@@ -154,10 +192,23 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
                 aria-hidden
               />
+              {open ? (
+                <div
+                  className="absolute inset-0 z-[1] touch-none select-none cursor-pointer"
+                  aria-hidden
+                  onPointerDown={(e) => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    setScrubDragging(true);
+                    setDockTimelineFromClientX(e.clientX);
+                    void getAudioElement()?.play();
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
           {open ? (
-            <div className="relative z-10 shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4">
+            <div className="relative z-10 shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 pointer-events-none">
               <PlayerLeftColumn
                 session={session}
                 track={track}
@@ -167,11 +218,17 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               />
             </div>
           ) : null}
-          <div className="relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden">
+          <div
+            className={`relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
+              open ? "pointer-events-none" : ""
+            }`}
+          >
           <button
             type="button"
             onClick={toggleExpanded}
-            className="relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left"
+            className={`relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left ${
+              open ? "pointer-events-auto" : ""
+            }`}
           >
             <div
               className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/20 shadow-sm ring-1 ring-black/40"
@@ -203,7 +260,11 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               </div>
             ) : null}
           </button>
-          <div className="relative z-10 flex items-center gap-1 shrink-0">
+          <div
+            className={`relative z-10 flex items-center gap-1 shrink-0 ${
+              open ? "pointer-events-auto" : ""
+            }`}
+          >
             <MiniGhostButton
               active={shuffle}
               label="Shuffle"
@@ -258,7 +319,11 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               theme={theme}
               variant="mini"
               morphTransition
-              triggerClassName={!open ? "bg-black/70 border border-white/15 shadow-sm" : undefined}
+              triggerClassName={
+                !open
+                  ? "bg-black/70 border border-white/15 shadow-sm"
+                  : "pointer-events-auto"
+              }
             />
           </div>
           </div>

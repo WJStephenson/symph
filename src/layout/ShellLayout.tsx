@@ -105,14 +105,18 @@ export function ShellLayout() {
         </div>
       </nav>
       <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="mx-3 mt-4 mb-6 flex justify-center shrink-0 w-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-          aria-label="Home"
-        >
-          <SymphMark className="size-10 shrink-0" />
-        </button>
+        <div className="shrink-0 px-2 mt-4 mb-6">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex w-full min-w-0 items-center gap-3 rounded-xl py-2 pl-2 pr-3 text-sm text-zinc-400 symph-tone-transition border border-transparent hover:bg-white/5 hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+            aria-label="Home"
+          >
+            <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 text-white">
+              <SymphMark className="size-full" />
+            </span>
+          </button>
+        </div>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
           <SideLink to="/" label="Home" icon={HomeIcon} />
           <SideLink

@@ -53,30 +53,32 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (!open) setQueueAccordionOpen(false);
+    if (open) setQueueAccordionOpen(true);
+    else setQueueAccordionOpen(false);
   }, [open]);
 
   if (!session || !track) return null;
 
   return (
     <div
-      className="max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0"
-      style={open ? { height: "90dvh", maxHeight: "90dvh" } : undefined}
+      className={`max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0 ${
+        open ? "h-full max-h-full" : ""
+      }`}
     >
       <div
         className={`rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
-          open ? "bg-zinc-950/[0.96] shadow-2xl min-h-0" : "glass"
+          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1" : "glass"
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
         <div
           className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
-            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            open ? "grid-rows-[1fr] flex-1 min-h-0" : "grid-rows-[0fr]"
           }`}
         >
-          <div className="min-h-0 overflow-hidden flex flex-col" inert={!open ? true : undefined}>
-            <div className="flex max-h-[min(42svh,360px)] md:max-h-none flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
-              <div className={`flex-1 min-h-0 flex flex-col ${open ? "min-h-[100px]" : "min-h-0"}`}>
+          <div className="min-h-0 overflow-hidden flex flex-col h-full" inert={!open ? true : undefined}>
+            <div className="flex flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
+              <div className="flex-1 min-h-0 flex flex-col">
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                   {queueAccordionOpen ? (
                     <VirtualizedQueue
@@ -178,20 +180,22 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 maxWidth={160}
               />
             </div>
-            <div className="min-w-0">
-              <div
-                className="text-sm font-medium text-white truncate"
-                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
-              >
-                {track.title}
+            {!open ? (
+              <div className="min-w-0">
+                <div
+                  className="text-sm font-medium text-white truncate"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
+                >
+                  {track.title}
+                </div>
+                <div
+                  className="text-xs text-zinc-200 truncate"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
+                >
+                  {track.artist}
+                </div>
               </div>
-              <div
-                className="text-xs text-zinc-200 truncate"
-                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
-              >
-                {track.artist}
-              </div>
-            </div>
+            ) : null}
           </button>
           <div className="relative z-10 flex items-center gap-1 shrink-0">
             <MiniGhostButton

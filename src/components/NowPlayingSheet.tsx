@@ -35,8 +35,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   const track = queue[index];
   const queueKey = useMemo(() => queue.map((q) => q.id).join("\0"), [queue]);
-  const compactProgress =
-    !open && durationSec > 0 ? Math.min(1, Math.max(0, positionSec / durationSec)) : 0;
+  const timelineProgress =
+    durationSec > 0 ? Math.min(1, Math.max(0, positionSec / durationSec)) : 0;
 
   const toggleExpanded = useCallback(() => {
     if (open) onClose();
@@ -132,29 +132,20 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 </button>
               </div>
             </div>
-            <div className="shrink-0 mt-auto px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
-              <PlayerLeftColumn
-                session={session}
-                track={track}
-                morphTransition
-                variant="dockExpanded"
-                hideArtwork
-              />
-            </div>
           </div>
         </div>
         <div
-          className={`relative flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
-            !open ? "rounded-b-2xl" : ""
+          className={`relative shrink-0 flex flex-col overflow-hidden ${
+            open ? "rounded-t-2xl" : "rounded-b-2xl"
           }`}
         >
-          {!open ? (
+          {durationSec > 0 ? (
             <>
               <div className="pointer-events-none absolute inset-0 bg-zinc-950/90" aria-hidden />
               <div
                 className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
                 style={{
-                  width: `${compactProgress * 100}%`,
+                  width: `${timelineProgress * 100}%`,
                   background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
                 }}
                 aria-hidden
@@ -165,6 +156,18 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               />
             </>
           ) : null}
+          {open ? (
+            <div className="relative z-10 shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4">
+              <PlayerLeftColumn
+                session={session}
+                track={track}
+                morphTransition
+                variant="dockExpanded"
+                hideArtwork
+              />
+            </div>
+          ) : null}
+          <div className="relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden">
           <button
             type="button"
             onClick={toggleExpanded}
@@ -257,6 +260,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               morphTransition
               triggerClassName={!open ? "bg-black/70 border border-white/15 shadow-sm" : undefined}
             />
+          </div>
           </div>
         </div>
       </div>

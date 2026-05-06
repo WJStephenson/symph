@@ -21,6 +21,53 @@ function clamp255(n: number) {
   return Math.max(0, Math.min(255, Math.round(n)));
 }
 
+function mixRgb(
+  a: { r: number; g: number; b: number },
+  b: { r: number; g: number; b: number },
+  t: number
+) {
+  return {
+    r: clamp255(a.r + (b.r - a.r) * t),
+    g: clamp255(a.g + (b.g - a.g) * t),
+    b: clamp255(a.b + (b.b - a.b) * t)
+  };
+}
+
+function srgbChannelToLinear(c: number): number {
+  const x = c / 255;
+  return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+}
+
+function relativeLuminance(rgb: { r: number; g: number; b: number }): number {
+  const R = srgbChannelToLinear(rgb.r);
+  const G = srgbChannelToLinear(rgb.g);
+  const B = srgbChannelToLinear(rgb.b);
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+export function clampAccentRgb(rgb: { r: number; g: number; b: number }): {
+  r: number;
+  g: number;
+  b: number;
+} {
+  let x = { ...rgb };
+  const chroma = Math.max(x.r, x.g, x.b) - Math.min(x.r, x.g, x.b);
+  if (chroma < 22) {
+    x = mixRgb(x, DEFAULT, 0.55);
+  }
+  for (let i = 0; i < 16; i++) {
+    const L = relativeLuminance(x);
+    if (L >= 0.26 && L <= 0.68) break;
+    if (L < 0.26) x = mixRgb(x, { r: 255, g: 255, b: 255 }, 0.2);
+    else x = mixRgb(x, { r: 0, g: 0, b: 0 }, 0.2);
+  }
+  return {
+    r: clamp255(x.r),
+    g: clamp255(x.g),
+    b: clamp255(x.b)
+  };
+}
+
 export function parseCssRgb(input: string | null): { r: number; g: number; b: number } | null {
   if (!input || !input.trim()) return null;
   const m = input.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
@@ -37,20 +84,9 @@ export function parseCssRgb(input: string | null): { r: number; g: number; b: nu
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
-function mixRgb(
-  a: { r: number; g: number; b: number },
-  b: { r: number; g: number; b: number },
-  t: number
-) {
-  return {
-    r: clamp255(a.r + (b.r - a.r) * t),
-    g: clamp255(a.g + (b.g - a.g) * t),
-    b: clamp255(a.b + (b.b - a.b) * t)
-  };
-}
-
 export function accentTheme(accent: string | null): AccentTheme {
-  const base = parseCssRgb(accent) ?? DEFAULT;
+  const parsed = parseCssRgb(accent) ?? DEFAULT;
+  const base = clampAccentRgb(parsed);
   const { r, g, b } = base;
   const fill = `rgb(${r},${g},${b})`;
   const dim = mixRgb(base, { r: 0, g: 0, b: 0 }, 0.35);

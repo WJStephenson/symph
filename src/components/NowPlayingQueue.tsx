@@ -241,7 +241,7 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({
           <p className={`text-zinc-500 mt-1 ${isDock ? "text-xs" : "text-sm"}`}>{track.albumTitle}</p>
         )}
       </div>
-      <WaveLineSeekBar onSeek={onSeek} accent={accent} />
+      {!isDock ? <WaveLineSeekBar onSeek={onSeek} accent={accent} /> : null}
       <div className="flex justify-between text-xs text-zinc-500">
         <span>{formatDuration(positionSec)}</span>
         <span>{formatDuration(durationSec)}</span>

@@ -23,13 +23,57 @@ type Props = {
   queue: QueueTrack[];
   activeIndex: number;
   dense?: boolean;
+  hideHeader?: boolean;
 };
+
+export const PlayerHeroArtwork = memo(function PlayerHeroArtwork({
+  session,
+  track,
+  morphTransition,
+  layout
+}: {
+  session: JellyfinSession;
+  track: QueueTrack;
+  morphTransition?: boolean;
+  layout: "dock" | "sidebar";
+}) {
+  const accent = usePlayerStore((s) => s.accent);
+  const dock = layout === "dock";
+  return (
+    <div
+      className={`relative mx-auto w-full overflow-hidden shadow-2xl ring-1 ring-white/10 ${
+        dock
+          ? "max-w-[min(100%,320px)] aspect-square rounded-3xl"
+          : "max-w-[280px] lg:max-w-none aspect-square rounded-[2rem]"
+      }`}
+      style={morphTransition ? { viewTransitionName: "symph-artwork" } : undefined}
+    >
+      <div
+        className="absolute inset-0 opacity-35 blur-3xl scale-110"
+        style={{
+          background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
+        }}
+      />
+      <ArtworkImage
+        session={session}
+        itemId={track.albumId ?? track.id}
+        item={queueCoverItem(track)}
+        className="relative z-10 w-full h-full object-cover"
+        alt=""
+        maxWidth={dock ? 640 : 900}
+        priority
+        skipColourAnalysis
+      />
+    </div>
+  );
+});
 
 export const VirtualizedQueue = memo(function VirtualizedQueue({
   session,
   queue,
   activeIndex,
-  dense
+  dense,
+  hideHeader
 }: Props) {
   const playIndex = usePlayerStore((s) => s.playIndex);
   const accent = usePlayerStore((s) => s.accent);
@@ -53,23 +97,25 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
     <section
       className={`flex-1 min-h-0 flex flex-col min-w-0 ${dense ? "bg-transparent" : "bg-black/20"}`}
     >
-      <div
-        className={`shrink-0 border-b border-white/10 flex items-center justify-between gap-2 ${
-          dense ? "px-3 py-2" : "px-4 py-3"
-        }`}
-      >
-        <div>
-          <h2 className="text-sm font-medium text-white">Queue</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</p>
+      {!hideHeader ? (
+        <div
+          className={`shrink-0 border-b border-white/10 flex items-center justify-between gap-2 ${
+            dense ? "px-3 py-2" : "px-4 py-3"
+          }`}
+        >
+          <div>
+            <h2 className="text-sm font-medium text-white">Queue</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">{queue.length} tracks</p>
+          </div>
+          {queue.length > 0 && (
+            <AddToPlaylistButton
+              session={session}
+              trackIds={queue.map((q) => q.id)}
+              className="rounded-lg px-2.5 py-1.5"
+            />
+          )}
         </div>
-        {queue.length > 0 && (
-          <AddToPlaylistButton
-            session={session}
-            trackIds={queue.map((q) => q.id)}
-            className="rounded-lg px-2.5 py-1.5"
-          />
-        )}
-      </div>
+      ) : null}
       <div ref={parentRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin contain-strict">
         <div
           className="relative w-full"
@@ -79,61 +125,59 @@ export const VirtualizedQueue = memo(function VirtualizedQueue({
             const q = queue[vi.index];
             if (!q) return null;
             const isActive = vi.index === activeIndex;
-                return (
-                  <div
-                    key={q.id}
-                    className="absolute left-0 right-0 px-4"
-                    style={{ transform: `translateY(${vi.start}px)` }}
+            return (
+              <div
+                key={q.id}
+                className="absolute left-0 right-0 px-4"
+                style={{ transform: `translateY(${vi.start}px)` }}
+              >
+                <div
+                  className={`flex items-stretch gap-1 rounded-xl ${
+                    isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
+                  }`}
+                  style={
+                    isActive ? { boxShadow: `inset 3px 0 0 ${theme.fill}` } : undefined
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => playIndex(vi.index)}
+                    className={`flex flex-1 min-w-0 items-center text-left ${
+                      dense ? "gap-2 p-1.5" : "gap-3 p-2"
+                    }`}
                   >
+                    <div className="text-xs text-zinc-500 w-7 tabular-nums shrink-0">{vi.index + 1}</div>
                     <div
-                      className={`flex items-stretch gap-1 rounded-xl ${
-                        isActive ? "bg-white/[0.07]" : "hover:bg-white/5"
+                      className={`rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-800 ${
+                        dense ? "size-9" : "size-10"
                       }`}
-                      style={
-                        isActive
-                          ? { boxShadow: `inset 3px 0 0 ${theme.fill}` }
-                          : undefined
-                      }
                     >
-                      <button
-                        type="button"
-                        onClick={() => playIndex(vi.index)}
-                        className={`flex flex-1 min-w-0 items-center text-left ${
-                          dense ? "gap-2 p-1.5" : "gap-3 p-2"
-                        }`}
-                      >
-                        <div className="text-xs text-zinc-500 w-7 tabular-nums shrink-0">{vi.index + 1}</div>
-                        <div
-                          className={`rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-800 ${
-                            dense ? "size-9" : "size-10"
-                          }`}
-                        >
-                          <ArtworkImage
-                            session={session}
-                            itemId={q.albumId ?? q.id}
-                            item={queueCoverItem(q)}
-                            className="size-full object-cover"
-                            alt=""
-                            maxWidth={96}
-                            skipColourAnalysis
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm text-white truncate">{q.title}</div>
-                          <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
-                        </div>
-                        {q.durationTicks !== undefined && (
-                          <div className="text-xs text-zinc-500 tabular-nums shrink-0">
-                            {formatDuration(q.durationTicks / 10_000_000)}
-                          </div>
-                        )}
-                      </button>
-                      <div className="flex items-center pr-1 shrink-0">
-                        <AddToPlaylistButton session={session} trackIds={[q.id]} variant="icon" />
-                      </div>
+                      <ArtworkImage
+                        session={session}
+                        itemId={q.albumId ?? q.id}
+                        item={queueCoverItem(q)}
+                        className="size-full object-cover"
+                        alt=""
+                        maxWidth={96}
+                        skipColourAnalysis
+                      />
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-white truncate">{q.title}</div>
+                      <div className="text-xs text-zinc-500 truncate">{q.artist}</div>
+                    </div>
+                    {q.durationTicks !== undefined && (
+                      <div className="text-xs text-zinc-500 tabular-nums shrink-0">
+                        {formatDuration(q.durationTicks / 10_000_000)}
+                      </div>
+                    )}
+                  </button>
+                  <div className="flex items-center pr-1 shrink-0">
+                    <AddToPlaylistButton session={session} trackIds={[q.id]} variant="icon" />
                   </div>
-                );
+                </div>
+              </div>
+            );
           })}
         </div>
       </div>
@@ -178,31 +222,12 @@ export const PlayerLeftColumn = memo(function PlayerLeftColumn({
   const shell = (
     <div className={isDock ? "space-y-3 md:space-y-4 w-full" : "p-5 lg:p-8 space-y-5 max-w-md mx-auto lg:mx-0 lg:max-w-none"}>
       {!hideArtwork ? (
-        <div
-          className={`relative mx-auto w-full overflow-hidden shadow-2xl ring-1 ring-white/10 ${
-            isDock
-              ? "max-w-[min(100%,320px)] aspect-square rounded-3xl"
-              : "max-w-[280px] lg:max-w-none aspect-square rounded-[2rem]"
-          }`}
-          style={morphTransition ? { viewTransitionName: "symph-artwork" } : undefined}
-        >
-          <div
-            className="absolute inset-0 opacity-35 blur-3xl scale-110"
-            style={{
-              background: accent ?? "radial-gradient(circle at 30% 20%, #6366f1, transparent)"
-            }}
-          />
-          <ArtworkImage
-            session={session}
-            itemId={track.albumId ?? track.id}
-            item={queueCoverItem(track)}
-            className="relative z-10 w-full h-full object-cover"
-            alt=""
-            maxWidth={isDock ? 640 : 900}
-            priority
-            skipColourAnalysis
-          />
-        </div>
+        <PlayerHeroArtwork
+          session={session}
+          track={track}
+          morphTransition={morphTransition}
+          layout={isDock ? "dock" : "sidebar"}
+        />
       ) : null}
       <div>
         <h1

@@ -1,4 +1,4 @@
-import { useId, memo, useCallback, useEffect, useRef, useState } from "react";
+import { useId, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getAudioElement } from "@/audio/audioRef";
 import { usePlayerStore } from "@/state/playerStore";
 
@@ -50,9 +50,9 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
   const clipRectRef = useRef<SVGRectElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [svgWidth, setSvgWidth] = useState(320);
-  const [pathD, setPathD] = useState("");
   const [dragging, setDragging] = useState(false);
   const [local, setLocal] = useState(positionSec);
+  const localRef = useRef(local);
   const phaseRef = useRef(0);
   const ampRef = useRef(0);
   const rafRef = useRef(0);
@@ -64,11 +64,14 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
     if (!dragging) setLocal(positionSec);
   }, [positionSec, dragging]);
 
+  useEffect(() => {
+    localRef.current = local;
+  }, [local]);
+
   const paintPaths = useCallback(
     (phase: number, amp: number) => {
       const w = svgWidth;
       const d = buildWavePath(w, waveTop, WAVE_VIEW_HEIGHT, phase, amp);
-      setPathD(d);
       baseRef.current?.setAttribute("d", d);
       playedRef.current?.setAttribute("d", d);
     },
@@ -84,6 +87,16 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
     ro.observe(wrap);
     return () => ro.disconnect();
   }, []);
+
+  useLayoutEffect(() => {
+    paintPaths(phaseRef.current, ampRef.current);
+    const dur = durationSec;
+    const pos = localRef.current;
+    const frac = dur > 0 ? Math.min(1, Math.max(0, pos / dur)) : 0;
+    const cw = svgWidth * frac;
+    clipRectRef.current?.setAttribute("width", String(Math.max(0, cw)));
+    if (handleRef.current) handleRef.current.style.left = `${frac * 100}%`;
+  }, [svgWidth, durationSec, paintPaths]);
 
   useEffect(() => {
     let last = performance.now();
@@ -101,11 +114,11 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       paintPaths(phaseRef.current, ampRef.current);
 
       const dur = durationSec;
-      let pos = local;
+      let pos = localRef.current;
       if (!dragging && dur > 0) {
         const el = getAudioElement();
         if (el && !el.paused) pos = el.currentTime;
-        else pos = local;
+        else pos = localRef.current;
       }
       const frac = dur > 0 ? Math.min(1, Math.max(0, pos / dur)) : 0;
       const cw = svgWidth * frac;
@@ -122,7 +135,7 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
       mounted = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [isPlaying, svgWidth, dragging, local, durationSec, ampMax, paintPaths]);
+  }, [isPlaying, svgWidth, dragging, durationSec, ampMax, paintPaths]);
 
   useEffect(() => {
     if (isPlaying || dragging) return;
@@ -195,7 +208,6 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
         </defs>
         <path
           ref={baseRef}
-          d={pathD}
           fill="none"
           stroke={strokeMuted}
           strokeWidth={1.75}
@@ -204,7 +216,6 @@ export const WaveLineSeekBar = memo(function WaveLineSeekBar({
         />
         <path
           ref={playedRef}
-          d={pathD}
           fill="none"
           stroke={strokeAccent}
           strokeWidth={2}

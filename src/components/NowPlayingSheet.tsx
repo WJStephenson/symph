@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, type ReactNode } from "react";
-import { PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
+import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { queueCoverItem } from "@/lib/format";
@@ -15,6 +16,25 @@ type Props = {
   onClose: () => void;
 };
 
+const SheetProgressRail = memo(function SheetProgressRail({ open }: { open: boolean }) {
+  const accent = usePlayerStore((s) => s.accent);
+  const positionSec = usePlayerStore((s) => s.positionSec);
+  const durationSec = usePlayerStore((s) => s.durationSec);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
+  const pct = durationSec > 0 ? Math.min(100, (positionSec / durationSec) * 100) : 0;
+  return (
+    <div
+      className={`h-[3px] symph-tone-transition shrink-0 ${open ? "max-md:hidden" : ""}`}
+      style={{ backgroundColor: theme.progressTrack }}
+    >
+      <div
+        className="h-full symph-tone-transition"
+        style={{ width: `${pct}%`, backgroundColor: theme.progress }}
+      />
+    </div>
+  );
+});
+
 export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const session = useServerStore((s) => s.session);
   const accent = usePlayerStore((s) => s.accent);
@@ -22,8 +42,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const queue = usePlayerStore((s) => s.queue);
   const index = usePlayerStore((s) => s.index);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
-  const positionSec = usePlayerStore((s) => s.positionSec);
-  const durationSec = usePlayerStore((s) => s.durationSec);
   const shuffle = usePlayerStore((s) => s.shuffle);
   const repeat = usePlayerStore((s) => s.repeat);
   const next = usePlayerStore((s) => s.next);
@@ -31,10 +49,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
 
+  const [queueAccordionOpen, setQueueAccordionOpen] = useState(false);
+
   const track = queue[index];
   const queueKey = useMemo(() => queue.map((q) => q.id).join("\0"), [queue]);
-
-  const pct = durationSec > 0 ? Math.min(100, (positionSec / durationSec) * 100) : 0;
 
   const toggleExpanded = useCallback(() => {
     startViewTransitionIfSupported(() => {
@@ -50,6 +68,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     return () => {
       document.body.style.overflow = prevOverflow;
     };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) setQueueAccordionOpen(false);
   }, [open]);
 
   if (!session || !track) return null;
@@ -71,24 +93,59 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       >
         {open && (
           <div className="flex max-h-[min(42svh,360px)] md:max-h-none flex-1 min-h-0 flex-col border-b border-white/10 bg-black/25">
-            <VirtualizedQueue
-              key={queueKey}
-              session={session}
-              queue={queue}
-              activeIndex={index}
-              dense
-            />
+            <div className="flex-1 min-h-0 flex flex-col min-h-[100px]">
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {queueAccordionOpen ? (
+                  <VirtualizedQueue
+                    key={queueKey}
+                    session={session}
+                    queue={queue}
+                    activeIndex={index}
+                    dense
+                    hideHeader
+                  />
+                ) : (
+                  <div className="flex-1 min-h-0 flex items-center justify-center p-3 md:p-5">
+                    <PlayerHeroArtwork
+                      session={session}
+                      track={track}
+                      morphTransition
+                      layout="dock"
+                    />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                aria-expanded={queueAccordionOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQueueAccordionOpen((v) => !v);
+                }}
+                className="shrink-0 flex w-full items-center gap-2 border-t border-white/10 bg-black/30 px-3 py-2.5 md:px-4 text-left hover:bg-white/[0.04] transition-colors"
+              >
+                <span
+                  className={`text-zinc-400 shrink-0 transition-transform duration-200 ${
+                    queueAccordionOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  <ChevronDownGlyph />
+                </span>
+                <span className="text-sm font-medium text-white">Queue</span>
+                <span className="text-xs text-zinc-500 tabular-nums">{queue.length} tracks</span>
+                <span className="flex-1 min-w-2" />
+                {queue.length > 0 ? (
+                  <AddToPlaylistButton
+                    session={session}
+                    trackIds={queue.map((q) => q.id)}
+                    className="rounded-lg px-2.5 py-1.5"
+                  />
+                ) : null}
+              </button>
+            </div>
           </div>
         )}
-        <div
-          className={`h-[3px] symph-tone-transition shrink-0 ${open ? "max-md:hidden" : ""}`}
-          style={{ backgroundColor: theme.progressTrack }}
-        >
-          <div
-            className="h-full symph-tone-transition"
-            style={{ width: `${pct}%`, backgroundColor: theme.progress }}
-          />
-        </div>
+        <SheetProgressRail open={open} />
         {open ? (
           <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
             <PlayerLeftColumn
@@ -96,6 +153,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               track={track}
               morphTransition
               variant="dockExpanded"
+              hideArtwork
             />
           </div>
         ) : null}
@@ -166,6 +224,14 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ChevronDownGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

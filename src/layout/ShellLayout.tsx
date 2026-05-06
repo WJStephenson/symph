@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { Navigate, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
 import { SymphMark } from "@/components/SymphMark";
@@ -31,7 +31,6 @@ const SIDEBAR_COLLAPSED = "4rem";
 
 export function ShellLayout() {
   const session = useServerStore((s) => s.session);
-  const navigate = useNavigate();
   const libraryId = useServerStore((s) => s.preferredMusicLibraryId);
   const queueLen = usePlayerStore((s) => s.queue.length);
   const accent = usePlayerStore((s) => s.accent);
@@ -106,16 +105,11 @@ export function ShellLayout() {
       </nav>
       <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30 w-16 hover:w-64 border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl pt-[var(--safe-top)] transition-[width] duration-300 ease-out overflow-hidden">
         <div className="shrink-0 px-2 mt-4 mb-6">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex w-full min-w-0 items-center gap-3 rounded-xl py-2 pl-2 pr-3 text-sm text-zinc-400 symph-tone-transition border border-transparent hover:bg-white/5 hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-            aria-label="Home"
-          >
-            <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 text-white">
+          <div className="flex w-full min-w-0 items-center gap-3 py-2 pl-2 pr-3 text-sm text-zinc-400">
+            <span className="shrink-0 w-9 h-9 inline-flex items-center justify-center text-white" aria-hidden>
               <SymphMark className="size-full" />
             </span>
-          </button>
+          </div>
         </div>
         <div className="flex flex-col gap-1 px-2 min-w-[16rem]">
           <SideLink to="/" label="Home" icon={HomeIcon} />

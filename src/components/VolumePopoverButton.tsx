@@ -7,9 +7,15 @@ type Props = {
   theme: AccentTheme;
   variant?: "transport" | "mini";
   morphTransition?: boolean;
+  triggerClassName?: string;
 };
 
-export function VolumePopoverButton({ theme, variant = "transport", morphTransition }: Props) {
+export function VolumePopoverButton({
+  theme,
+  variant = "transport",
+  morphTransition,
+  triggerClassName
+}: Props) {
   const isMini = variant === "mini";
   const volume = usePlayerStore((s) => s.volume);
   const muted = usePlayerStore((s) => s.muted);
@@ -80,13 +86,18 @@ export function VolumePopoverButton({ theme, variant = "transport", morphTransit
   const root = typeof document !== "undefined" ? document.body : null;
   const pct = Math.round((muted ? 0 : volume) * 100);
 
-  const triggerClass = isMini
-    ? `shrink-0 inline-flex items-center justify-center rounded-full transition size-9 ${
-        open ? "" : "text-zinc-200 hover:bg-white/10"
-      }`
-    : `size-10 inline-flex items-center justify-center rounded-full ${
-        open ? "" : "text-zinc-400 hover:text-white"
-      }`;
+  const triggerClass = [
+    isMini
+      ? `shrink-0 inline-flex items-center justify-center rounded-full transition size-9 ${
+          open ? "" : "text-zinc-200 hover:bg-white/10"
+        }`
+      : `size-10 inline-flex items-center justify-center rounded-full ${
+          open ? "" : "text-zinc-400 hover:text-white"
+        }`,
+    triggerClassName ?? ""
+  ]
+    .join(" ")
+    .trim();
 
   const triggerStyle: CSSProperties = {
     ...(open

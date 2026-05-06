@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
-import { WaveLineSeekBar } from "@/components/WaveLineSeekBar";
 import { accentTheme } from "@/lib/accentTheme";
 import { startViewTransitionIfSupported } from "@/lib/viewTransition";
 import { queueCoverItem } from "@/lib/format";
@@ -30,11 +29,15 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const prev = usePlayerStore((s) => s.prev);
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
+  const positionSec = usePlayerStore((s) => s.positionSec);
+  const durationSec = usePlayerStore((s) => s.durationSec);
 
   const [queueAccordionOpen, setQueueAccordionOpen] = useState(false);
 
   const track = queue[index];
   const queueKey = useMemo(() => queue.map((q) => q.id).join("\0"), [queue]);
+  const compactProgress =
+    !open && durationSec > 0 ? Math.min(1, Math.max(0, positionSec / durationSec)) : 0;
 
   const toggleExpanded = useCallback(() => {
     startViewTransitionIfSupported(() => {
@@ -42,12 +45,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       else onOpen();
     });
   }, [open, onOpen, onClose]);
-
-  const onSeek = useCallback((sec: number) => {
-    const el = getAudioElement();
-    if (!el) return;
-    el.currentTime = sec;
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -133,9 +130,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             </div>
           </div>
         )}
-        {!open ? (
-          <WaveLineSeekBar onSeek={onSeek} accent={accent} minimal height={14} />
-        ) : null}
         {open ? (
           <div className="shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 border-b border-white/5">
             <PlayerLeftColumn
@@ -147,14 +141,35 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             />
           </div>
         ) : null}
-        <div className="flex items-center gap-3 p-2.5 shrink-0 backdrop-blur-[10px]">
+        <div
+          className={`relative flex items-center gap-3 p-2.5 shrink-0 overflow-hidden backdrop-blur-[10px] ${
+            !open ? "rounded-b-2xl" : ""
+          }`}
+        >
+          {!open ? (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-zinc-950/90" aria-hidden />
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
+                style={{
+                  width: `${compactProgress * 100}%`,
+                  background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
+                }}
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
+                aria-hidden
+              />
+            </>
+          ) : null}
           <button
             type="button"
             onClick={toggleExpanded}
-            className="flex items-center gap-3 min-w-0 flex-1 text-left"
+            className="relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left"
           >
             <div
-              className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/10"
+              className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/20 shadow-sm ring-1 ring-black/40"
               style={{ viewTransitionName: "symph-artwork" }}
             >
               <ArtworkImage
@@ -167,27 +182,44 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-medium text-white truncate">{track.title}</div>
-              <div className="text-xs text-zinc-400 truncate">{track.artist}</div>
+              <div
+                className="text-sm font-medium text-white truncate"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
+              >
+                {track.title}
+              </div>
+              <div
+                className="text-xs text-zinc-200 truncate"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
+              >
+                {track.artist}
+              </div>
             </div>
           </button>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="relative z-10 flex items-center gap-1 shrink-0">
             <MiniGhostButton
               active={shuffle}
               label="Shuffle"
               theme={theme}
               transitionName="symph-control-shuffle"
+              controlPlate={!open}
               onClick={() => toggleShuffle()}
             >
               <ShuffleGlyph />
             </MiniGhostButton>
-            <IconButton label="Previous" transitionName="symph-control-prev" onClick={() => prev()}>
+            <IconButton
+              label="Previous"
+              transitionName="symph-control-prev"
+              controlPlate={!open}
+              onClick={() => prev()}
+            >
               <PrevIcon />
             </IconButton>
             <IconButton
               label={isPlaying ? "Pause" : "Play"}
               transitionName="symph-control-play"
               primary
+              controlPlate={!open}
               onClick={() => {
                 const el = getAudioElement();
                 if (!el) return;
@@ -197,7 +229,12 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             >
               {isPlaying ? <PauseIcon /> : <PlayIcon />}
             </IconButton>
-            <IconButton label="Next" transitionName="symph-control-next" onClick={() => next()}>
+            <IconButton
+              label="Next"
+              transitionName="symph-control-next"
+              controlPlate={!open}
+              onClick={() => next()}
+            >
               <NextIcon />
             </IconButton>
             <MiniGhostButton
@@ -205,11 +242,17 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               label="Repeat"
               theme={theme}
               transitionName="symph-control-repeat"
+              controlPlate={!open}
               onClick={() => cycleRepeat()}
             >
               <RepeatGlyph mode={repeat} />
             </MiniGhostButton>
-            <VolumePopoverButton theme={theme} variant="mini" morphTransition />
+            <VolumePopoverButton
+              theme={theme}
+              variant="mini"
+              morphTransition
+              triggerClassName={!open ? "bg-black/55 backdrop-blur-md border border-white/15 shadow-sm" : undefined}
+            />
           </div>
         </div>
       </div>
@@ -231,7 +274,8 @@ function MiniGhostButton({
   label,
   active,
   theme,
-  transitionName
+  transitionName,
+  controlPlate
 }: {
   children: ReactNode;
   onClick: () => void;
@@ -239,7 +283,20 @@ function MiniGhostButton({
   active?: boolean;
   theme: ReturnType<typeof accentTheme>;
   transitionName: string;
+  controlPlate?: boolean;
 }) {
+  const cls = [
+    "size-9 inline-flex items-center justify-center rounded-full symph-tone-transition shrink-0",
+    active
+      ? controlPlate
+        ? "border border-white/20 ring-1 ring-black/30"
+        : ""
+      : controlPlate
+        ? "text-zinc-100 border border-white/15 bg-black/55 backdrop-blur-md shadow-sm hover:bg-white/12"
+        : "text-zinc-200 hover:bg-white/10"
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <button
       type="button"
@@ -248,9 +305,7 @@ function MiniGhostButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`size-9 inline-flex items-center justify-center rounded-full symph-tone-transition shrink-0 ${
-        active ? "" : "text-zinc-200 hover:bg-white/10"
-      }`}
+      className={cls}
       style={{
         ...(active
           ? { backgroundColor: theme.ghostActiveBg, color: theme.ghostActiveText }
@@ -268,14 +323,24 @@ function IconButton({
   onClick,
   label,
   primary,
-  transitionName
+  transitionName,
+  controlPlate
 }: {
   children: ReactNode;
   onClick: () => void;
   label: string;
   primary?: boolean;
   transitionName: string;
+  controlPlate?: boolean;
 }) {
+  const cls = [
+    "inline-flex items-center justify-center rounded-full transition shrink-0",
+    primary
+      ? `size-11 bg-white text-zinc-900 shadow-lg${controlPlate ? " ring-2 ring-black/45 shadow-xl" : ""}`
+      : controlPlate
+        ? "size-9 text-zinc-100 border border-white/15 bg-black/55 backdrop-blur-md shadow-sm hover:bg-white/12"
+        : "size-9 text-zinc-200 hover:bg-white/10"
+  ].join(" ");
   return (
     <button
       type="button"
@@ -284,11 +349,7 @@ function IconButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`inline-flex items-center justify-center rounded-full transition shrink-0 ${
-        primary
-          ? "size-11 bg-white text-zinc-900 shadow-lg"
-          : "size-9 text-zinc-200 hover:bg-white/10"
-      }`}
+      className={cls}
       style={{ viewTransitionName: transitionName }}
     >
       {children}

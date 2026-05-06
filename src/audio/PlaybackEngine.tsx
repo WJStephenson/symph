@@ -12,6 +12,7 @@ import { usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 import { setRegisteredAudioElement } from "@/audio/audioRef";
+import { clampAccentRgb } from "@/lib/accentTheme";
 
 export function PlaybackEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -113,7 +114,12 @@ export function PlaybackEngine() {
             r = Math.round((r / n) * 1.12);
             g = Math.round((g / n) * 1.12);
             b = Math.round((b / n) * 1.12);
-            setAccent(`rgb(${Math.min(255, r)},${Math.min(255, g)},${Math.min(255, b)})`);
+            const cc = clampAccentRgb({
+              r: Math.min(255, r),
+              g: Math.min(255, g),
+              b: Math.min(255, b)
+            });
+            setAccent(`rgb(${cc.r},${cc.g},${cc.b})`);
           }
         }
         bmp.close();

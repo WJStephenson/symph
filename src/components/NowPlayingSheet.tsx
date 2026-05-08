@@ -72,11 +72,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     };
   }, [scrubDragging, setDockTimelineFromClientX]);
 
-  const toggleExpanded = useCallback(() => {
-    if (open) onClose();
-    else onOpen();
-  }, [open, onOpen, onClose]);
-
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
@@ -95,6 +90,116 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   }, [open]);
 
   if (!session || !track) return null;
+
+  const dockBar = (
+    <div
+      className={`relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
+        open ? "pointer-events-none" : ""
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          if (!open) onOpen();
+        }}
+        className={`relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left ${
+          open ? "pointer-events-auto" : ""
+        }`}
+      >
+        <div
+          className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/20 shadow-sm ring-1 ring-black/40"
+          style={{ viewTransitionName: "symph-artwork" }}
+        >
+          <ArtworkImage
+            session={session}
+            itemId={track.albumId ?? track.id}
+            item={queueCoverItem(track)}
+            className="size-full object-cover"
+            alt=""
+            maxWidth={160}
+          />
+        </div>
+        {!open ? (
+          <div className="min-w-0">
+            <div
+              className="text-sm font-medium text-white truncate"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
+            >
+              {track.title}
+            </div>
+            <div
+              className="text-xs text-zinc-200 truncate"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
+            >
+              {track.artist}
+            </div>
+          </div>
+        ) : null}
+      </button>
+      <div
+        className={`relative z-10 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : ""}`}
+      >
+        <MiniGhostButton
+          active={shuffle}
+          label="Shuffle"
+          theme={theme}
+          transitionName="symph-control-shuffle"
+          controlPlate={!open}
+          onClick={() => toggleShuffle()}
+        >
+          <ShuffleGlyph />
+        </MiniGhostButton>
+        <IconButton
+          label="Previous"
+          transitionName="symph-control-prev"
+          controlPlate={!open}
+          onClick={() => prev()}
+        >
+          <PrevIcon />
+        </IconButton>
+        <IconButton
+          label={isPlaying ? "Pause" : "Play"}
+          transitionName="symph-control-play"
+          primary
+          controlPlate={!open}
+          onClick={() => {
+            const el = getAudioElement();
+            if (!el) return;
+            if (el.paused) void el.play();
+            else el.pause();
+          }}
+        >
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        </IconButton>
+        <IconButton
+          label="Next"
+          transitionName="symph-control-next"
+          controlPlate={!open}
+          onClick={() => next()}
+        >
+          <NextIcon />
+        </IconButton>
+        <MiniGhostButton
+          active={repeat !== "off"}
+          label="Repeat"
+          theme={theme}
+          transitionName="symph-control-repeat"
+          controlPlate={!open}
+          onClick={() => cycleRepeat()}
+        >
+          <RepeatGlyph mode={repeat} />
+        </MiniGhostButton>
+        <VolumePopoverButton
+          theme={theme}
+          variant="mini"
+          morphTransition
+          triggerClassName={
+            !open ? "bg-black/70 border border-white/15 shadow-sm" : "pointer-events-auto"
+          }
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -193,167 +298,64 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
               />
             </>
           ) : null}
-          {open && durationSec > 0 ? (
-            <div ref={scrubTargetRef} className="relative z-[1] h-12 w-full shrink-0 touch-none select-none">
-              <div className="pointer-events-none absolute inset-0 bg-zinc-950/90" aria-hidden />
-              <div
-                className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
-                style={{
-                  width: `${displayProgress * 100}%`,
-                  background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
-                }}
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
-                aria-hidden
-              />
-              <div
-                className="absolute inset-0 z-[1] cursor-pointer"
-                aria-hidden
-                onPointerDown={(e) => {
-                  if (e.button !== 0) return;
-                  e.preventDefault();
-                  setScrubDragging(true);
-                  setDockTimelineFromClientX(e.clientX);
-                  void getAudioElement()?.play();
-                }}
-              />
-            </div>
-          ) : null}
           {open ? (
-            <div className="relative z-10 shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 pointer-events-none">
-              <PlayerLeftColumn
-                session={session}
-                track={track}
-                morphTransition
-                variant="dockExpanded"
-                hideArtwork
-              />
-            </div>
-          ) : null}
-          <div
-            className={`relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
-              open ? "pointer-events-none" : ""
-            }`}
-          >
-            <button
-              type="button"
-              onClick={toggleExpanded}
-              className={`relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left ${
-                open ? "pointer-events-auto" : ""
-              }`}
+            <div
+              ref={durationSec > 0 ? scrubTargetRef : undefined}
+              className="relative shrink-0 flex flex-col overflow-hidden"
             >
-              <div
-                className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/20 shadow-sm ring-1 ring-black/40"
-                style={{ viewTransitionName: "symph-artwork" }}
-              >
-                <ArtworkImage
+              {durationSec > 0 ? (
+                <>
+                  <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950/90" aria-hidden />
+                  <div
+                    className="pointer-events-none absolute inset-y-0 left-0 z-0 transition-[width] duration-150 ease-linear"
+                    style={{
+                      width: `${displayProgress * 100}%`,
+                      background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
+                    }}
+                    aria-hidden
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
+                    aria-hidden
+                  />
+                  <div
+                    className="absolute inset-0 z-[1] cursor-pointer touch-none select-none"
+                    aria-hidden
+                    onPointerDown={(e) => {
+                      if (e.button !== 0) return;
+                      e.preventDefault();
+                      setScrubDragging(true);
+                      setDockTimelineFromClientX(e.clientX);
+                      void getAudioElement()?.play();
+                    }}
+                  />
+                </>
+              ) : null}
+              <div className="relative z-10 shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 space-y-4 pointer-events-none">
+                <PlayerLeftColumn
                   session={session}
-                  itemId={track.albumId ?? track.id}
-                  item={queueCoverItem(track)}
-                  className="size-full object-cover"
-                  alt=""
-                  maxWidth={160}
+                  track={track}
+                  morphTransition
+                  variant="dockExpanded"
+                  hideArtwork
                 />
               </div>
-              {!open ? (
-                <div className="min-w-0">
-                  <div
-                    className="text-sm font-medium text-white truncate"
-                    style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
-                  >
-                    {track.title}
-                  </div>
-                  <div
-                    className="text-xs text-zinc-200 truncate"
-                    style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
-                  >
-                    {track.artist}
-                  </div>
-                </div>
-              ) : null}
-            </button>
-            <div
-              className={`relative z-10 flex items-center gap-1 shrink-0 ${
-                open ? "pointer-events-auto" : ""
-              }`}
-            >
-              <MiniGhostButton
-                active={shuffle}
-                label="Shuffle"
-                theme={theme}
-                transitionName="symph-control-shuffle"
-                controlPlate={!open}
-                onClick={() => toggleShuffle()}
-              >
-                <ShuffleGlyph />
-              </MiniGhostButton>
-              <IconButton
-                label="Previous"
-                transitionName="symph-control-prev"
-                controlPlate={!open}
-                onClick={() => prev()}
-              >
-                <PrevIcon />
-              </IconButton>
-              <IconButton
-                label={isPlaying ? "Pause" : "Play"}
-                transitionName="symph-control-play"
-                primary
-                controlPlate={!open}
-                onClick={() => {
-                  const el = getAudioElement();
-                  if (!el) return;
-                  if (el.paused) void el.play();
-                  else el.pause();
-                }}
-              >
-                {isPlaying ? <PauseIcon /> : <PlayIcon />}
-              </IconButton>
-              <IconButton
-                label="Next"
-                transitionName="symph-control-next"
-                controlPlate={!open}
-                onClick={() => next()}
-              >
-                <NextIcon />
-              </IconButton>
-              <MiniGhostButton
-                active={repeat !== "off"}
-                label="Repeat"
-                theme={theme}
-                transitionName="symph-control-repeat"
-                controlPlate={!open}
-                onClick={() => cycleRepeat()}
-              >
-                <RepeatGlyph mode={repeat} />
-              </MiniGhostButton>
-              <VolumePopoverButton
-                theme={theme}
-                variant="mini"
-                morphTransition
-                triggerClassName={
-                  !open
-                    ? "bg-black/70 border border-white/15 shadow-sm"
-                    : "pointer-events-auto"
-                }
-              />
+              {dockBar}
             </div>
-          </div>
+          ) : (
+            dockBar
+          )}
           {open ? (
             <button
               type="button"
+              aria-label="Minimise player"
               onClick={(e) => {
                 e.stopPropagation();
                 onClose();
               }}
-              className="relative z-20 flex w-full shrink-0 items-center justify-center gap-2 border-t border-white/10 bg-black/20 px-4 py-3.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
+              className="relative z-20 flex w-full shrink-0 items-center justify-center border-t border-white/10 bg-black/20 px-4 py-3 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
             >
-              <span className="text-zinc-500" aria-hidden>
-                <ChevronDownGlyph />
-              </span>
-              Minimise player
+              <ChevronDownGlyph />
             </button>
           ) : null}
         </div>

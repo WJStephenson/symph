@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchAlbumTracks, fetchItem } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
@@ -6,13 +6,17 @@ import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
-import { usePlayerStore } from "@/state/playerStore";
+import { accentTheme } from "@/lib/accentTheme";
+import { selectNowPlayingTrackId, usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 export function AlbumPage() {
   const { albumId } = useParams();
   const session = useServerStore((s) => s.session);
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const accent = usePlayerStore((s) => s.accent);
+  const nowPlayingId = usePlayerStore(selectNowPlayingTrackId);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const [album, setAlbum] = useState<BaseItemDto | null>(null);
   const [tracks, setTracks] = useState<BaseItemDto[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -93,16 +97,20 @@ export function AlbumPage() {
             {album.ProductionYear && (
               <p className="text-sm text-zinc-500 mt-1">{album.ProductionYear}</p>
             )}
-            <div className="mt-8 rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden">
+            <div className="mt-8 rounded-2xl border border-white/10 overflow-hidden p-2 space-y-1 bg-black/[0.15]">
               {tracks.map((tr, i) => {
                 const dur = tr.RunTimeTicks ? formatDuration(ticksToSec(tr.RunTimeTicks)) : "";
                 const resume = tr.UserData?.PlaybackPositionTicks
                   ? formatDuration(ticksToSec(tr.UserData.PlaybackPositionTicks))
                   : null;
+                const isActive = tr.Id === nowPlayingId;
                 return (
                   <div
                     key={tr.Id}
-                    className="flex items-stretch gap-1 hover:bg-white/5 transition group"
+                    className={`flex items-stretch gap-1 rounded-xl border transition-colors group ${
+                      isActive ? "bg-white/[0.07]" : "border-transparent hover:bg-white/5"
+                    }`}
+                    style={isActive ? { borderColor: theme.fill } : undefined}
                   >
                     <button
                       type="button"

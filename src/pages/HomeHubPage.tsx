@@ -14,7 +14,7 @@ import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
 import { accentTheme } from "@/lib/accentTheme";
 import { getAudioElement } from "@/audio/audioRef";
-import { usePlayerStore } from "@/state/playerStore";
+import { selectNowPlayingTrackId, usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 type HubState = {
@@ -38,6 +38,7 @@ export function HomeHubPage() {
   const libraryId = useServerStore((s) => s.preferredMusicLibraryId);
   const setQueue = usePlayerStore((s) => s.setQueue);
   const accent = usePlayerStore((s) => s.accent);
+  const nowPlayingId = usePlayerStore(selectNowPlayingTrackId);
   const mixTheme = useMemo(() => accentTheme(accent), [accent]);
   const [hub, setHub] = useState<HubState>(emptyHub);
   const [loading, setLoading] = useState(true);
@@ -264,11 +265,16 @@ export function HomeHubPage() {
               </div>
             </div>
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-              {hub.recentTracks.map((tr, i) => (
-                <div
-                  key={tr.Id}
-                  className="shrink-0 w-44 rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden hover:border-indigo-400/35 transition relative"
-                >
+              {hub.recentTracks.map((tr, i) => {
+                const isActive = tr.Id === nowPlayingId;
+                return (
+                  <div
+                    key={tr.Id}
+                    className={`shrink-0 w-44 rounded-2xl border bg-zinc-900/50 overflow-hidden transition-colors relative ${
+                      isActive ? "bg-white/[0.07]" : "border-white/10 hover:border-indigo-400/35"
+                    }`}
+                    style={isActive ? { borderColor: mixTheme.fill } : undefined}
+                  >
                   <button
                     type="button"
                     onClick={() => playRecentFrom(i)}
@@ -302,8 +308,9 @@ export function HomeHubPage() {
                       className="bg-black/50 border-white/20 backdrop-blur-sm"
                     />
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </section>
         </>

@@ -119,22 +119,25 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             maxWidth={160}
           />
         </div>
-        {!open ? (
-          <div className="min-w-0">
-            <div
-              className="text-sm font-medium text-white truncate"
-              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
-            >
-              {track.title}
-            </div>
-            <div
-              className="text-xs text-zinc-200 truncate"
-              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
-            >
-              {track.artist}
-            </div>
+        <div
+          className={`min-w-0 overflow-hidden transition-[max-height,opacity] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            open ? "max-h-0 opacity-0" : "max-h-14 opacity-100"
+          }`}
+          aria-hidden={open}
+        >
+          <div
+            className="text-sm font-medium text-white truncate"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
+          >
+            {track.title}
           </div>
-        ) : null}
+          <div
+            className="text-xs text-zinc-200 truncate"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
+          >
+            {track.artist}
+          </div>
+        </div>
       </button>
       <div
         className={`relative z-10 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : ""}`}
@@ -208,13 +211,13 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       }`}
     >
       <div
-        className={`rounded-2xl border border-white/10 symph-tone-transition transition-shadow duration-500 ease-out flex flex-col min-h-0 overflow-hidden pointer-events-auto ${
-          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full" : "glass"
+        className={`rounded-2xl border border-white/10 symph-tone-transition flex flex-col min-h-0 overflow-hidden pointer-events-auto transition-[background-color,box-shadow,backdrop-filter] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full backdrop-blur-none" : "glass"
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
         <div
-          className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${
+          className={`grid transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
             open ? "grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden" : "grid-rows-[0fr]"
           }`}
         >
@@ -277,13 +280,16 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           </div>
         </div>
         <div
-          className={`relative shrink-0 flex flex-col overflow-hidden ${
+          className={`relative shrink-0 flex flex-col overflow-hidden transition-[border-radius] duration-300 ease-out motion-reduce:transition-none ${
             open ? "" : "rounded-b-2xl"
           }`}
         >
           {!open && durationSec > 0 ? (
             <>
-              <div className="pointer-events-none absolute inset-0 bg-zinc-950/90" aria-hidden />
+              <div
+                className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                aria-hidden
+              />
               <div
                 className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
                 style={{
@@ -293,7 +299,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
                 aria-hidden
               />
             </>
@@ -345,19 +351,25 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           ) : (
             dockBar
           )}
-          {open ? (
-            <button
-              type="button"
-              aria-label="Minimise player"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              className="relative z-20 flex w-full shrink-0 items-center justify-center border-t border-white/10 bg-black/20 px-4 py-3 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
-            >
-              <ChevronDownGlyph />
-            </button>
-          ) : null}
+          <div
+            className={`relative z-20 grid transition-[grid-template-rows] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+              open ? "grid-rows-[minmax(0,1fr)]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <button
+                type="button"
+                aria-label="Minimise player"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="flex w-full shrink-0 items-center justify-center border-t border-white/10 bg-black/20 px-4 py-3 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
+              >
+                <ChevronDownGlyph />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

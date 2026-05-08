@@ -13,7 +13,8 @@ import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { getAudioElement } from "@/audio/audioRef";
 import { artistName, formatDuration, ticksToSec, toQueueTrack } from "@/lib/format";
-import { usePlayerStore } from "@/state/playerStore";
+import { accentTheme } from "@/lib/accentTheme";
+import { selectNowPlayingTrackId, usePlayerStore } from "@/state/playerStore";
 import { pushToast } from "@/state/toastStore";
 import { useServerStore } from "@/state/serverStore";
 
@@ -22,6 +23,9 @@ export function PlaylistEditPage() {
   const session = useServerStore((s) => s.session);
   const navigate = useNavigate();
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const accent = usePlayerStore((s) => s.accent);
+  const nowPlayingId = usePlayerStore(selectNowPlayingTrackId);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const [name, setName] = useState("");
   const [savedName, setSavedName] = useState("");
   const [tracks, setTracks] = useState<BaseItemDto[]>([]);
@@ -229,13 +233,18 @@ export function PlaylistEditPage() {
           className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-indigo-400/60"
         />
         {addResults.length > 0 && (
-          <div className="rounded-xl border border-white/10 divide-y divide-white/5 max-h-60 overflow-y-auto">
-            {addResults.map((tr) => (
-              <div
-                key={tr.Id}
-                className="flex items-center gap-2 px-2 py-2 hover:bg-white/5"
-              >
-                <button
+          <div className="rounded-xl border border-white/10 max-h-60 overflow-y-auto p-2 space-y-1">
+            {addResults.map((tr) => {
+              const isActive = tr.Id === nowPlayingId;
+              return (
+                <div
+                  key={tr.Id}
+                  className={`flex items-center gap-2 rounded-xl border px-2 py-2 transition-colors ${
+                    isActive ? "bg-white/[0.07]" : "border-transparent hover:bg-white/5"
+                  }`}
+                  style={isActive ? { borderColor: theme.fill } : undefined}
+                >
+                  <button
                   type="button"
                   disabled={busy}
                   onClick={() => void addTrack(tr)}
@@ -257,22 +266,27 @@ export function PlaylistEditPage() {
                   </div>
                   <span className="text-xs text-indigo-300 shrink-0">Add here</span>
                 </button>
-                <AddToPlaylistButton session={session} trackIds={[tr.Id]} variant="icon" />
-              </div>
-            ))}
+                  <AddToPlaylistButton session={session} trackIds={[tr.Id]} variant="icon" />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
       <div>
         <h2 className="text-sm uppercase tracking-widest text-zinc-500 mb-3">Tracks</h2>
-        <div className="rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden">
+        <div className="rounded-2xl border border-white/10 overflow-hidden p-2 space-y-1 bg-black/[0.15]">
           {tracks.map((tr, i) => {
             const entryId = tr.PlaylistItemId ?? tr.Id;
             const dur = tr.RunTimeTicks ? formatDuration(ticksToSec(tr.RunTimeTicks)) : "";
+            const isActive = tr.Id === nowPlayingId;
             return (
               <div
                 key={`${tr.Id}-${entryId}`}
-                className="flex items-stretch gap-1 hover:bg-white/5"
+                className={`flex items-stretch gap-1 rounded-xl border transition-colors ${
+                  isActive ? "bg-white/[0.07]" : "border-transparent hover:bg-white/5"
+                }`}
+                style={isActive ? { borderColor: theme.fill } : undefined}
               >
                 <button
                   type="button"

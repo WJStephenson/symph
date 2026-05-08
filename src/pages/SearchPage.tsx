@@ -5,11 +5,16 @@ import type { BaseItemDto } from "@/jellyfin/types";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { artistName } from "@/lib/format";
+import { accentTheme } from "@/lib/accentTheme";
+import { selectNowPlayingTrackId, usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 export function SearchPage() {
   const session = useServerStore((s) => s.session);
   const location = useLocation();
+  const accent = usePlayerStore((s) => s.accent);
+  const nowPlayingId = usePlayerStore(selectNowPlayingTrackId);
+  const theme = useMemo(() => accentTheme(accent), [accent]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [results, setResults] = useState<BaseItemDto[]>([]);
@@ -120,10 +125,14 @@ export function SearchPage() {
             );
           }
           if (item.Type === "Audio") {
+            const isActive = item.Id === nowPlayingId;
             return (
               <div
                 key={item.Id}
-                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 p-2 pl-3 hover:border-indigo-400/40 transition"
+                className={`flex items-center gap-2 rounded-2xl border bg-zinc-900/40 p-2 pl-3 transition-colors ${
+                  isActive ? "bg-white/[0.07]" : "border-white/10 hover:border-indigo-400/40"
+                }`}
+                style={isActive ? { borderColor: theme.fill } : undefined}
               >
                 <Link
                   to={item.ParentId ? `/album/${item.ParentId}` : "/libraries"}

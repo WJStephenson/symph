@@ -80,10 +80,10 @@ export function ShellLayout() {
       {showPlayer && (
         <div className="fixed left-0 right-0 z-40 bottom-[calc(4.25rem+var(--safe-bottom))] md:bottom-[calc(1rem+var(--safe-bottom))] md:left-[calc(var(--symph-sidebar-w)+1rem)] px-3 md:px-8 flex flex-col justify-end min-h-0 pointer-events-none">
           <div
-            className={`pointer-events-none w-full max-w-6xl mx-auto shrink-0 flex flex-col justify-end min-h-0 transition-[max-height] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            className={`pointer-events-none w-full max-w-6xl mx-auto flex flex-col justify-end min-h-0 transition-[max-height,height] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
               sheetOpen
-                ? "max-h-[90dvh] min-h-0 overflow-hidden"
-                : "max-h-[10rem] overflow-visible"
+                ? "h-[min(90dvh,calc(100dvh-var(--safe-top)-var(--safe-bottom)-5.5rem))] max-h-[90dvh] shrink-0 overflow-hidden md:h-[min(90dvh,calc(100dvh-var(--safe-top)-var(--safe-bottom)-3rem))]"
+                : "h-auto max-h-[10rem] shrink-0 overflow-visible"
             }`}
           >
             <NowPlayingSheet open={sheetOpen} onOpen={openSheet} onClose={closeSheet} />

@@ -14,8 +14,8 @@ export type BaseItemDto = {
   CollectionType?: string;
   ParentId?: string;
   AlbumArtist?: string;
-  AlbumArtists?: { Name?: string }[];
-  Artists?: { Name?: string }[];
+  AlbumArtists?: { Name?: string; Id?: string }[];
+  Artists?: { Name?: string; Id?: string }[];
   ProductionYear?: number;
   RunTimeTicks?: number;
   IndexNumber?: number;

@@ -108,8 +108,13 @@ export async function fetchItems(
   return (await res.json()) as ItemsResponse;
 }
 
-export async function fetchItem(session: JellyfinSession, itemId: string): Promise<BaseItemDto> {
+export async function fetchItem(
+  session: JellyfinSession,
+  itemId: string,
+  fields?: string
+): Promise<BaseItemDto> {
   const url = new URL(`${session.serverUrl}/Users/${session.userId}/Items/${itemId}`);
+  if (fields) url.searchParams.set("Fields", fields);
   const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) throw new Error("Could not load item");
   return (await res.json()) as BaseItemDto;
@@ -138,6 +143,90 @@ export async function fetchFirstDescendantWithPrimaryImage(
     }
     if (items.length < limit) break;
     start += items.length;
+  }
+  return null;
+}
+
+export async function fetchFirstDescendantWithWorkingPrimaryImage(
+  session: JellyfinSession,
+  artistId: string,
+  excludeIds: string[],
+  maxScanned = 400,
+  probeMaxWidth = 96
+): Promise<BaseItemDto | null> {
+  const exclude = new Set(excludeIds);
+  let start = 0;
+  const limit = 100;
+  while (start < maxScanned) {
+    const data = await fetchItems(session, {
+      ParentId: artistId,
+      Recursive: true,
+      IncludeItemTypes: "MusicAlbum,Audio",
+      SortBy: "SortName",
+      StartIndex: start,
+      Limit: limit,
+      Fields: "PrimaryImageAspectRatio,ImageTags"
+    });
+    const items = data.Items ?? [];
+    for (const x of items) {
+      if (exclude.has(x.Id)) continue;
+      if (!x.ImageTags?.Primary) continue;
+      const blob = await fetchImageBlob(session, x.Id, "Primary", probeMaxWidth, { item: x });
+      if (blob) return x;
+    }
+    if (items.length < limit) break;
+    start += items.length;
+  }
+  return null;
+}
+
+export async function resolveArtistIdsForMusicItem(
+  session: JellyfinSession,
+  meta: BaseItemDto,
+  depth = 0
+): Promise<string[]> {
+  if (depth > 4) return [];
+  const ids: string[] = [];
+  for (const a of meta.AlbumArtists ?? []) {
+    if (a.Id) ids.push(a.Id);
+  }
+  for (const a of meta.Artists ?? []) {
+    if (a.Id && !ids.includes(a.Id)) ids.push(a.Id);
+  }
+  if (ids.length) return ids;
+  if (meta.Type === "Audio" && meta.ParentId) {
+    try {
+      const parent = await fetchItem(session, meta.ParentId, "AlbumArtists,Artists,ParentId,Type");
+      return resolveArtistIdsForMusicItem(session, parent, depth + 1);
+    } catch {
+      return [];
+    }
+  }
+  if (meta.Type === "MusicAlbum" && meta.ParentId) {
+    try {
+      const parent = await fetchItem(session, meta.ParentId, "AlbumArtists,Artists,ParentId,Type");
+      if (parent.Type === "MusicArtist") return [parent.Id];
+      return resolveArtistIdsForMusicItem(session, parent, depth + 1);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+export async function resolveWorkingFallbackArtwork(
+  session: JellyfinSession,
+  meta: BaseItemDto | undefined,
+  failedFetchId: string
+): Promise<BaseItemDto | null> {
+  if (!meta?.Id) return null;
+  if (meta.Type === "MusicArtist") {
+    return fetchFirstDescendantWithWorkingPrimaryImage(session, meta.Id, [failedFetchId]);
+  }
+  const artistIds = await resolveArtistIdsForMusicItem(session, meta);
+  for (const aid of artistIds) {
+    const hit = await fetchFirstDescendantWithWorkingPrimaryImage(session, aid, [failedFetchId]);
+    if (hit) return hit;
   }
   return null;
 }

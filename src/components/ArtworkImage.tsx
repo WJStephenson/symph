@@ -1,8 +1,12 @@
 import { memo, useEffect, useState } from "react";
-import { fetchFirstDescendantWithPrimaryImage, fetchItem } from "@/jellyfin/client";
+import {
+  fetchFirstDescendantWithPrimaryImage,
+  fetchItem,
+  resolveWorkingFallbackArtwork
+} from "@/jellyfin/client";
 import { getArtworkObjectUrl, peekArtworkObjectUrl } from "@/jellyfin/artworkCache";
 import type { BaseItemDto, JellyfinSession } from "@/jellyfin/types";
-import { primaryImageKnownAbsent } from "@/lib/format";
+import { artistName, primaryImageKnownAbsent } from "@/lib/format";
 
 type Props = {
   session: JellyfinSession;
@@ -19,6 +23,7 @@ type Props = {
 type ImageSource = {
   fetchId: string;
   hint?: BaseItemDto;
+  meta?: BaseItemDto;
 };
 
 export const ArtworkImage = memo(function ArtworkImage({
@@ -41,9 +46,29 @@ export const ArtworkImage = memo(function ArtworkImage({
     setUrl(null);
     void (async () => {
       let meta = item?.Id === itemId ? item : undefined;
-      if (!meta) {
+      if (meta) {
+        const hasArtistId =
+          (meta.AlbumArtists ?? []).some((a) => a.Id) ||
+          (meta.Artists ?? []).some((a) => a.Id);
+        if (
+          !hasArtistId &&
+          (meta.Type === "Audio" || meta.Type === "MusicAlbum")
+        ) {
+          try {
+            meta = await fetchItem(
+              session,
+              itemId,
+              "AlbumArtists,Artists,ParentId,Type,ImageTags"
+            );
+          } catch {}
+        }
+      } else {
         try {
-          meta = await fetchItem(session, itemId);
+          meta = await fetchItem(
+            session,
+            itemId,
+            "AlbumArtists,Artists,ParentId,Type,ImageTags"
+          );
         } catch {
           meta = undefined;
         }
@@ -60,7 +85,7 @@ export const ArtworkImage = memo(function ArtworkImage({
         }
       }
       if (cancelled) return;
-      setSource({ fetchId, hint });
+      setSource({ fetchId, hint, meta });
     })();
     return () => {
       cancelled = true;
@@ -69,7 +94,7 @@ export const ArtworkImage = memo(function ArtworkImage({
 
   useEffect(() => {
     if (!source) return;
-    const { fetchId, hint } = source;
+    const { fetchId, hint, meta } = source;
     const opts = { type, maxWidth, item: hint, imageItemId: fetchId };
     const skipFetch = hint && hint.Id === fetchId ? primaryImageKnownAbsent(hint) : false;
     if (skipFetch) {
@@ -83,7 +108,18 @@ export const ArtworkImage = memo(function ArtworkImage({
     }
     let cancelled = false;
     void (async () => {
-      const blobUrl = await getArtworkObjectUrl(session, itemId, opts);
+      let blobUrl = await getArtworkObjectUrl(session, itemId, opts);
+      if (!blobUrl && meta) {
+        const fallback = await resolveWorkingFallbackArtwork(session, meta, fetchId);
+        if (!cancelled && fallback) {
+          blobUrl = await getArtworkObjectUrl(session, itemId, {
+            type,
+            maxWidth,
+            item: fallback,
+            imageItemId: fallback.Id
+          });
+        }
+      }
       if (cancelled) return;
       setUrl(blobUrl);
       if (!blobUrl || skipColourAnalysis || !onColour || type !== "Primary") return;
@@ -118,23 +154,34 @@ export const ArtworkImage = memo(function ArtworkImage({
           }
         }
         bmp.close();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     })();
     return () => {
       cancelled = true;
     };
   }, [session, itemId, source, type, maxWidth, onColour, skipColourAnalysis]);
 
+  const placeholderMeta = source?.meta ?? (item?.Id === itemId ? item : undefined);
+  const placeholderLabel = placeholderMeta
+    ? artistName(placeholderMeta)
+    : (alt ?? "").trim();
+
   if (!url) {
+    const shell =
+      className ??
+      "rounded-3xl bg-gradient-to-br from-indigo-900/60 to-zinc-900 border border-white/10";
     return (
       <div
-        className={
-          className ??
-          "rounded-3xl bg-gradient-to-br from-indigo-900/60 to-zinc-900 border border-white/10"
-        }
-      />
+        className={`${shell} flex min-h-0 min-w-0 items-center justify-center ${
+          placeholderLabel ? "p-1.5" : ""
+        }`}
+      >
+        {placeholderLabel ? (
+          <span className="line-clamp-4 text-center text-[10px] font-medium leading-tight text-zinc-200">
+            {placeholderLabel}
+          </span>
+        ) : null}
+      </div>
     );
   }
 

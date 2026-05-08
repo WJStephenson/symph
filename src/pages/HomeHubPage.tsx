@@ -267,6 +267,8 @@ export function HomeHubPage() {
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
               {hub.recentTracks.map((tr, i) => {
                 const isActive = tr.Id === nowPlayingId;
+                const coverItemId =
+                  tr.AlbumId ?? tr.ParentPrimaryImageItemId ?? tr.ParentId ?? tr.Id;
                 return (
                   <div
                     key={tr.Id}
@@ -283,7 +285,7 @@ export function HomeHubPage() {
                     <div className="aspect-square relative">
                       <ArtworkImage
                         session={session}
-                        itemId={tr.ParentId ?? tr.Id}
+                        itemId={coverItemId}
                         item={tr}
                         className="w-full h-full object-cover"
                         alt=""

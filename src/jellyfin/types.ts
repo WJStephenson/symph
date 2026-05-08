@@ -13,6 +13,8 @@ export type BaseItemDto = {
   PlaylistItemId?: string;
   CollectionType?: string;
   ParentId?: string;
+  AlbumId?: string;
+  ParentPrimaryImageItemId?: string;
   AlbumArtist?: string;
   AlbumArtists?: { Name?: string; Id?: string }[];
   Artists?: { Name?: string; Id?: string }[];

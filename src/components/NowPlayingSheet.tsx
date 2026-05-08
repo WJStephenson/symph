@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
-import { PlayerHeroArtwork, PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
+import { PlayerLeftColumn, VirtualizedQueue } from "@/components/NowPlayingQueue";
 import { accentTheme } from "@/lib/accentTheme";
 import { queueCoverItem } from "@/lib/format";
 import { getAudioElement } from "@/audio/audioRef";
@@ -31,7 +30,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const positionSec = usePlayerStore((s) => s.positionSec);
   const durationSec = usePlayerStore((s) => s.durationSec);
 
-  const [queueAccordionOpen, setQueueAccordionOpen] = useState(false);
   const [scrubDragging, setScrubDragging] = useState(false);
   const [scrubLocalSec, setScrubLocalSec] = useState(0);
   const scrubTargetRef = useRef<HTMLDivElement>(null);
@@ -73,20 +71,16 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   }, [scrubDragging, setDockTimelineFromClientX]);
 
   useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (open) setQueueAccordionOpen(true);
-    else {
-      setQueueAccordionOpen(false);
-      setScrubDragging(false);
+    if (open) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        setScrubDragging(false);
+      };
     }
+    setScrubDragging(false);
+    return undefined;
   }, [open]);
 
   if (!session || !track) return null;
@@ -206,8 +200,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   return (
     <div
-      className={`max-w-6xl mx-auto w-full flex flex-col min-h-0 shrink-0 ${
-        open ? "h-full max-h-full min-h-0 overflow-hidden flex flex-col" : ""
+      className={`max-w-6xl mx-auto w-full flex flex-col min-h-0 ${
+        open ? "h-full max-h-full min-h-0 flex-1 overflow-hidden" : "shrink-0"
       }`}
     >
       <div
@@ -216,66 +210,19 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
-        <div
-          className={`grid transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-            open ? "grid-rows-[minmax(0,1fr)] flex-1 min-h-0 overflow-hidden" : "grid-rows-[0fr]"
-          }`}
-        >
+        <div className={`grid min-h-0 ${open ? "grid-rows-[minmax(0,1fr)] flex-1 overflow-hidden" : "grid-rows-[0fr]"}`}>
           <div
             className="min-h-0 max-h-full overflow-hidden flex flex-col h-full"
             inert={!open ? true : undefined}
           >
             <div className="flex flex-1 min-h-0 flex-col overflow-hidden border-b border-white/10 bg-black/25">
-              <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                  {queueAccordionOpen ? (
-                    <VirtualizedQueue
-                      key={queueKey}
-                      session={session}
-                      queue={queue}
-                      activeIndex={index}
-                      dense
-                      hideHeader
-                    />
-                  ) : (
-                    <div className="flex-1 min-h-0 flex items-center justify-center p-3 md:p-5">
-                      <PlayerHeroArtwork
-                        session={session}
-                        track={track}
-                        morphTransition
-                        layout="dock"
-                      />
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  aria-expanded={queueAccordionOpen}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQueueAccordionOpen((v) => !v);
-                  }}
-                  className="shrink-0 flex w-full items-center gap-2 border-t border-white/10 bg-black/30 px-3 py-2.5 md:px-4 text-left hover:bg-white/[0.04] transition-colors"
-                >
-                  <span
-                    className={`text-zinc-400 shrink-0 transition-transform duration-200 ${
-                      queueAccordionOpen ? "rotate-180" : ""
-                    }`}
-                  >
-                    <ChevronDownGlyph />
-                  </span>
-                  <span className="text-sm font-medium text-white">Queue</span>
-                  <span className="text-xs text-zinc-500 tabular-nums">{queue.length} tracks</span>
-                  <span className="flex-1 min-w-2" />
-                  {queue.length > 0 ? (
-                    <AddToPlaylistButton
-                      session={session}
-                      trackIds={queue.map((q) => q.id)}
-                      className="rounded-lg px-2.5 py-1.5"
-                    />
-                  ) : null}
-                </button>
-              </div>
+              <VirtualizedQueue
+                key={queueKey}
+                session={session}
+                queue={queue}
+                activeIndex={index}
+                dense
+              />
             </div>
           </div>
         </div>
@@ -351,12 +298,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           ) : (
             dockBar
           )}
-          <div
-            className={`relative z-20 grid transition-[grid-template-rows] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-              open ? "grid-rows-[minmax(0,1fr)]" : "grid-rows-[0fr]"
-            }`}
-          >
-            <div className="min-h-0 overflow-hidden">
+          {open ? (
+            <div className="relative z-20 shrink-0 border-t border-white/10 bg-black/20">
               <button
                 type="button"
                 aria-label="Minimise player"
@@ -364,12 +307,12 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                   e.stopPropagation();
                   onClose();
                 }}
-                className="flex w-full shrink-0 items-center justify-center border-t border-white/10 bg-black/20 px-4 py-3 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
+                className="flex w-full items-center justify-center px-4 py-3 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 active:bg-white/[0.08]"
               >
                 <ChevronDownGlyph />
               </button>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -13,6 +13,10 @@ export type QueueTrack = {
   raw?: BaseItemDto;
 };
 
+export function selectNowPlayingTrackId(state: { queue: QueueTrack[]; index: number }): string | null {
+  return state.queue[state.index]?.id ?? null;
+}
+
 type PlayerState = {
   queue: QueueTrack[];
   index: number;

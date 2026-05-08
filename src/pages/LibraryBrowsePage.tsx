@@ -3,10 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { fetchAllAudioUnderParent, fetchItem, fetchItems } from "@/jellyfin/client";
 import type { BaseItemDto } from "@/jellyfin/types";
 import { artistName, toQueueTrack } from "@/lib/format";
+import { accentTheme } from "@/lib/accentTheme";
 import { ArtworkImage } from "@/components/ArtworkImage";
 import { AddToPlaylistButton } from "@/components/AddToPlaylistModal";
 import { getAudioElement } from "@/audio/audioRef";
-import { usePlayerStore } from "@/state/playerStore";
+import { selectNowPlayingTrackId, usePlayerStore } from "@/state/playerStore";
 import { useServerStore } from "@/state/serverStore";
 
 function shuffleInPlace<T>(arr: T[]): void {
@@ -21,6 +22,9 @@ export function LibraryBrowsePage() {
   const session = useServerStore((s) => s.session);
   const libraryRootId = useServerStore((s) => s.preferredMusicLibraryId);
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const accent = usePlayerStore((s) => s.accent);
+  const nowPlayingId = usePlayerStore(selectNowPlayingTrackId);
+  const browseTheme = useMemo(() => accentTheme(accent), [accent]);
   const [items, setItems] = useState<BaseItemDto[]>([]);
   const [container, setContainer] = useState<BaseItemDto | null>(null);
   const [title, setTitle] = useState("Library");
@@ -248,10 +252,14 @@ export function LibraryBrowsePage() {
             );
           }
           if (item.Type === "Audio") {
+            const isActive = item.Id === nowPlayingId;
             return (
               <div
                 key={item.Id}
-                className="text-left rounded-2xl border border-white/10 bg-zinc-900/50 overflow-hidden hover:border-indigo-400/40 transition relative"
+                className={`text-left rounded-2xl border bg-zinc-900/50 overflow-hidden transition-colors relative ${
+                  isActive ? "bg-white/[0.07]" : "border-white/10 hover:border-indigo-400/40"
+                }`}
+                style={isActive ? { borderColor: browseTheme.fill } : undefined}
               >
                 <button
                   type="button"

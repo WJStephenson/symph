@@ -19,6 +19,7 @@ function shuffleInPlace<T>(arr: T[]): void {
 export function LibraryBrowsePage() {
   const { parentId } = useParams();
   const session = useServerStore((s) => s.session);
+  const libraryRootId = useServerStore((s) => s.preferredMusicLibraryId);
   const setQueue = usePlayerStore((s) => s.setQueue);
   const [items, setItems] = useState<BaseItemDto[]>([]);
   const [container, setContainer] = useState<BaseItemDto | null>(null);
@@ -150,9 +151,12 @@ export function LibraryBrowsePage() {
 
   if (!session || !parentId) return null;
 
+  const showLibrariesBack =
+    libraryRootId == null ? !allArtistsBrowse : parentId !== libraryRootId;
+
   return (
     <div className="space-y-6 pt-2 md:pt-6">
-      {!allArtistsBrowse && (
+      {showLibrariesBack && (
         <div className="flex items-center gap-3">
           <Link to="/libraries" className="text-zinc-500 hover:text-white text-sm">
             ← Libraries

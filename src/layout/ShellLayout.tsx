@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { PlaybackEngine } from "@/audio/PlaybackEngine";
 import { NowPlayingSheet } from "@/components/NowPlayingSheet";
+import { usePlaybackKeyboardShortcuts } from "@/hooks/usePlaybackKeyboardShortcuts";
 import { SymphMark } from "@/components/SymphMark";
 import { ToastHost } from "@/components/ToastHost";
 import { accentTheme } from "@/lib/accentTheme";
@@ -37,11 +38,12 @@ export function ShellLayout() {
   const theme = useMemo(() => accentTheme(accent), [accent]);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const showPlayer = Boolean(session && queueLen > 0);
+  usePlaybackKeyboardShortcuts(showPlayer);
+
   if (!session) {
     return <Navigate to="/welcome" replace />;
   }
-
-  const showPlayer = queueLen > 0;
 
   const openSheet = () => setSheetOpen(true);
 

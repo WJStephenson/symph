@@ -207,7 +207,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           {durationSec > 0 ? (
             <>
               <div
-                className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                className="pointer-events-none absolute inset-0 bg-zinc-950/[0.42] backdrop-blur-xl transition-opacity duration-300 ease-out motion-reduce:transition-none max-md:bg-zinc-950/[0.52]"
                 aria-hidden
               />
               <div
@@ -219,7 +219,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-zinc-950/35 via-zinc-950/10 to-zinc-950/30 transition-opacity duration-300 ease-out motion-reduce:transition-none"
                 aria-hidden
               />
               <div
@@ -297,7 +297,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             >
               {durationSec > 0 ? (
                 <>
-                  <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950/90" aria-hidden />
+                  <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950/[0.42] backdrop-blur-xl max-md:bg-zinc-950/[0.52]" aria-hidden />
                   <div
                     className="pointer-events-none absolute inset-y-0 left-0 z-0 transition-[width] duration-150 ease-linear"
                     style={{
@@ -307,7 +307,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
                     aria-hidden
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50"
+                    className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/35 via-zinc-950/10 to-zinc-950/30"
                     aria-hidden
                   />
                   <div

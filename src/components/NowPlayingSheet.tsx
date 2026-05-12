@@ -87,7 +87,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   const transportControls = (
     <div
-      className={`relative z-20 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : "py-2 pointer-events-auto"}`}
+      className={`relative z-20 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : "h-full pointer-events-auto"}`}
     >
       <MiniGhostButton
         active={shuffle}
@@ -150,38 +150,42 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     </div>
   );
 
-  const dockArtwork = (layout: "compact" | "sheet") => (
-    <div
-      className={
-        layout === "compact"
-          ? "relative h-full shrink-0 self-stretch aspect-square overflow-hidden rounded-l-2xl border-y border-r border-white/20 shadow-sm ring-1 ring-black/40"
-          : "relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-sm ring-1 ring-black/40"
-      }
-      style={{ viewTransitionName: "symph-artwork" }}
-    >
-      <ArtworkImage
-        session={session}
-        itemId={track.albumId ?? track.id}
-        item={queueCoverItem(track)}
-        className="size-full object-cover"
-        alt=""
-        maxWidth={layout === "compact" ? 192 : 160}
-      />
-      {layout === "compact" ? (
-        <button
-          type="button"
-          aria-label="Expand now playing"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen();
-          }}
-          className="absolute bottom-1 right-1 z-20 flex size-8 items-center justify-center rounded-lg border border-white/25 bg-black/65 text-white shadow-md backdrop-blur-sm transition-colors hover:bg-black/80 active:bg-black/90"
-        >
-          <ChevronUpGlyph />
-        </button>
-      ) : null}
-    </div>
-  );
+  const dockArtwork = (layout: "compact" | "sheet") =>
+    layout === "compact" ? (
+      <button
+        type="button"
+        aria-label="Expand now playing"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        className="relative size-[60px] shrink-0 overflow-hidden rounded-l-2xl border-y border-r border-white/20 text-left shadow-sm ring-1 ring-black/40 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+        style={{ viewTransitionName: "symph-artwork" }}
+      >
+        <ArtworkImage
+          session={session}
+          itemId={track.albumId ?? track.id}
+          item={queueCoverItem(track)}
+          className="size-full object-cover"
+          alt=""
+          maxWidth={120}
+        />
+      </button>
+    ) : (
+      <div
+        className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-sm ring-1 ring-black/40"
+        style={{ viewTransitionName: "symph-artwork" }}
+      >
+        <ArtworkImage
+          session={session}
+          itemId={track.albumId ?? track.id}
+          item={queueCoverItem(track)}
+          className="size-full object-cover"
+          alt=""
+          maxWidth={160}
+        />
+      </div>
+    );
 
   const dockBar = open ? (
     <div
@@ -192,11 +196,11 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       {transportControls}
     </div>
   ) : (
-    <div className="relative z-10 flex min-h-[3.75rem] items-stretch shrink-0 overflow-hidden pl-0 pr-2.5">
+    <div className="relative z-10 flex h-[60px] shrink-0 items-center overflow-hidden pl-0 pr-2.5">
       {dockArtwork("compact")}
       <div
         ref={durationSec > 0 ? scrubTargetRef : undefined}
-        className="relative min-h-0 min-w-0 flex-1 self-stretch bg-zinc-950/90"
+        className="relative h-full min-h-0 min-w-0 flex-1 self-stretch bg-zinc-950/90"
       >
         {durationSec > 0 ? (
           <>
@@ -229,7 +233,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             />
           </>
         ) : null}
-        <div className="relative z-10 flex h-full min-w-0 flex-col justify-center py-2 pl-3 pr-2 pointer-events-none">
+        <div className="relative z-10 flex h-full min-w-0 flex-col justify-center px-3 py-0 pointer-events-none">
           <div
             className="text-sm font-medium text-white truncate"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
@@ -353,14 +357,6 @@ function ChevronDownGlyph() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronUpGlyph() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

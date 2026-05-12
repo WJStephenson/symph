@@ -264,8 +264,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       }`}
     >
       <div
-        className={`rounded-2xl border border-white/10 symph-tone-transition flex flex-col min-h-0 overflow-hidden pointer-events-auto transition-[background-color,box-shadow,backdrop-filter] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-          open ? "bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full backdrop-blur-none" : "glass"
+        className={`symph-tone-transition flex flex-col min-h-0 pointer-events-auto transition-[background-color,box-shadow,backdrop-filter] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+          open
+            ? "rounded-2xl border border-white/10 overflow-hidden bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full backdrop-blur-none"
+            : "overflow-visible rounded-none border-0 bg-transparent backdrop-blur-none"
         }`}
         style={{ boxShadow: theme.miniShadow }}
       >
@@ -274,7 +276,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             className="min-h-0 max-h-full overflow-hidden flex flex-col h-full"
             inert={!open ? true : undefined}
           >
-            <div className="flex flex-1 min-h-0 flex-col overflow-hidden border-b border-white/10 bg-black/25">
+            <div
+              className={`flex flex-1 min-h-0 flex-col overflow-hidden ${open ? "border-b border-white/10 bg-black/25" : "border-0 bg-transparent"}`}
+            >
               <VirtualizedQueue
                 key={queueKey}
                 session={session}
@@ -285,11 +289,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             </div>
           </div>
         </div>
-        <div
-          className={`relative shrink-0 flex flex-col overflow-hidden transition-[border-radius] duration-300 ease-out motion-reduce:transition-none ${
-            open ? "" : "rounded-b-2xl"
-          }`}
-        >
+        <div className={`relative shrink-0 flex flex-col ${open ? "overflow-hidden" : "overflow-visible bg-transparent"}`}>
           {open ? (
             <div
               ref={durationSec > 0 ? scrubTargetRef : undefined}

@@ -44,6 +44,12 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   const displayProgress =
     durationSec > 0 ? Math.min(1, Math.max(0, (scrubDragging ? scrubLocalSec : positionSec) / durationSec)) : 0;
 
+  const dockProgressGlassGradient = useMemo(
+    () =>
+      `linear-gradient(90deg, color-mix(in srgb, ${theme.fill} 34%, transparent) 0%, color-mix(in srgb, ${theme.fill} 52%, transparent) 100%)`,
+    [theme.fill]
+  );
+
   const setDockTimelineFromClientX = useCallback(
     (clientX: number) => {
       const wrap = scrubTargetRef.current;
@@ -86,7 +92,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   if (!session || !track) return null;
 
   const compactDockCapsule =
-    "overflow-hidden rounded-xl border border-white/10 bg-zinc-950/[0.88] backdrop-blur-xl max-md:bg-zinc-950/[0.94]";
+    "overflow-hidden rounded-xl border border-white/10 bg-zinc-950/[0.45] backdrop-blur-2xl max-md:bg-zinc-950/[0.52]";
+
+  const compactCapsuleShadow = { boxShadow: theme.miniShadow } as const;
 
   const transportControls = (
     <div className="relative z-20 flex shrink-0 items-center gap-1 pointer-events-auto">
@@ -198,7 +206,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
     </div>
   ) : (
     <div className="relative z-10 flex h-[60px] shrink-0 items-stretch gap-[10px] overflow-visible bg-transparent pl-0 pr-2.5">
-      <div className={`relative flex min-h-0 min-w-0 flex-1 items-stretch ${compactDockCapsule}`}>
+      <div
+        className={`relative flex min-h-0 min-w-0 flex-1 items-stretch ${compactDockCapsule}`}
+        style={compactCapsuleShadow}
+      >
         {dockArtwork("compact")}
         <div
           ref={durationSec > 0 ? scrubTargetRef : undefined}
@@ -207,19 +218,19 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           {durationSec > 0 ? (
             <>
               <div
-                className="pointer-events-none absolute inset-0 bg-zinc-950/[0.42] backdrop-blur-xl transition-opacity duration-300 ease-out motion-reduce:transition-none max-md:bg-zinc-950/[0.52]"
+                className="pointer-events-none absolute inset-0 bg-white/[0.04] backdrop-blur-2xl transition-opacity duration-300 ease-out motion-reduce:transition-none"
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/[0.06] via-transparent to-zinc-950/18 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 backdrop-blur-md transition-[width] duration-150 ease-linear"
                 style={{
                   width: `${displayProgress * 100}%`,
-                  background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
+                  background: dockProgressGlassGradient
                 }}
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-zinc-950/35 via-zinc-950/10 to-zinc-950/30 transition-opacity duration-300 ease-out motion-reduce:transition-none"
                 aria-hidden
               />
               <div
@@ -251,7 +262,10 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           </div>
         </div>
       </div>
-      <div className={`relative z-20 flex shrink-0 items-center py-1 pl-1.5 pr-1.5 ${compactDockCapsule}`}>
+      <div
+        className={`relative z-20 flex shrink-0 items-center py-1 pl-1.5 pr-1.5 ${compactDockCapsule}`}
+        style={compactCapsuleShadow}
+      >
         {transportControls}
       </div>
     </div>
@@ -269,7 +283,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             ? "rounded-2xl border border-white/10 overflow-hidden bg-zinc-950/[0.96] shadow-2xl flex-1 min-h-0 h-full max-h-full backdrop-blur-none"
             : "overflow-visible rounded-none border-0 bg-transparent backdrop-blur-none"
         }`}
-        style={{ boxShadow: theme.miniShadow }}
+        style={open ? { boxShadow: theme.miniShadow } : undefined}
       >
         <div className={`grid min-h-0 ${open ? "grid-rows-[minmax(0,1fr)] flex-1 overflow-hidden" : "grid-rows-[0fr]"}`}>
           <div
@@ -297,17 +311,20 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             >
               {durationSec > 0 ? (
                 <>
-                  <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950/[0.42] backdrop-blur-xl max-md:bg-zinc-950/[0.52]" aria-hidden />
                   <div
-                    className="pointer-events-none absolute inset-y-0 left-0 z-0 transition-[width] duration-150 ease-linear"
-                    style={{
-                      width: `${displayProgress * 100}%`,
-                      background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
-                    }}
+                    className="pointer-events-none absolute inset-0 z-0 bg-white/[0.04] backdrop-blur-2xl"
                     aria-hidden
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/35 via-zinc-950/10 to-zinc-950/30"
+                    className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-white/[0.06] via-transparent to-zinc-950/18"
+                    aria-hidden
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-y-0 left-0 z-0 backdrop-blur-md transition-[width] duration-150 ease-linear"
+                    style={{
+                      width: `${displayProgress * 100}%`,
+                      background: dockProgressGlassGradient
+                    }}
                     aria-hidden
                   />
                   <div

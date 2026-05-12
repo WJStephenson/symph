@@ -85,40 +85,151 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   if (!session || !track) return null;
 
-  const dockBar = (
+  const transportControls = (
     <div
-      className={`relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden ${
-        open ? "pointer-events-none" : ""
-      }`}
+      className={`relative z-20 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : "py-2 pointer-events-auto"}`}
     >
-      <button
-        type="button"
-        onClick={() => {
-          if (!open) onOpen();
-        }}
-        className={`relative z-10 flex items-center gap-3 min-w-0 flex-1 text-left ${
-          open ? "pointer-events-auto" : ""
-        }`}
+      <MiniGhostButton
+        active={shuffle}
+        label="Shuffle"
+        theme={theme}
+        transitionName="symph-control-shuffle"
+        controlPlate={!open}
+        onClick={() => toggleShuffle()}
       >
-        <div
-          className="size-12 shrink-0 rounded-xl overflow-hidden border border-white/20 shadow-sm ring-1 ring-black/40"
-          style={{ viewTransitionName: "symph-artwork" }}
+        <ShuffleGlyph />
+      </MiniGhostButton>
+      <IconButton
+        label="Previous"
+        transitionName="symph-control-prev"
+        controlPlate={!open}
+        onClick={() => prev()}
+      >
+        <PrevIcon />
+      </IconButton>
+      <IconButton
+        label={isPlaying ? "Pause" : "Play"}
+        transitionName="symph-control-play"
+        primary
+        controlPlate={!open}
+        onClick={() => {
+          const el = getAudioElement();
+          if (!el) return;
+          if (el.paused) void el.play();
+          else el.pause();
+        }}
+      >
+        {isPlaying ? <PauseIcon /> : <PlayIcon />}
+      </IconButton>
+      <IconButton
+        label="Next"
+        transitionName="symph-control-next"
+        controlPlate={!open}
+        onClick={() => next()}
+      >
+        <NextIcon />
+      </IconButton>
+      <MiniGhostButton
+        active={repeat !== "off"}
+        label="Repeat"
+        theme={theme}
+        transitionName="symph-control-repeat"
+        controlPlate={!open}
+        onClick={() => cycleRepeat()}
+      >
+        <RepeatGlyph mode={repeat} />
+      </MiniGhostButton>
+      <VolumePopoverButton
+        theme={theme}
+        variant="mini"
+        morphTransition
+        triggerClassName={
+          !open ? "bg-black/70 border border-white/15 shadow-sm" : "pointer-events-auto"
+        }
+      />
+    </div>
+  );
+
+  const dockArtwork = (layout: "compact" | "sheet") => (
+    <div
+      className={
+        layout === "compact"
+          ? "relative h-full shrink-0 self-stretch aspect-square overflow-hidden rounded-l-2xl border-y border-r border-white/20 shadow-sm ring-1 ring-black/40"
+          : "relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-sm ring-1 ring-black/40"
+      }
+      style={{ viewTransitionName: "symph-artwork" }}
+    >
+      <ArtworkImage
+        session={session}
+        itemId={track.albumId ?? track.id}
+        item={queueCoverItem(track)}
+        className="size-full object-cover"
+        alt=""
+        maxWidth={layout === "compact" ? 192 : 160}
+      />
+      {layout === "compact" ? (
+        <button
+          type="button"
+          aria-label="Expand now playing"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          className="absolute bottom-1 right-1 z-20 flex size-8 items-center justify-center rounded-lg border border-white/25 bg-black/65 text-white shadow-md backdrop-blur-sm transition-colors hover:bg-black/80 active:bg-black/90"
         >
-          <ArtworkImage
-            session={session}
-            itemId={track.albumId ?? track.id}
-            item={queueCoverItem(track)}
-            className="size-full object-cover"
-            alt=""
-            maxWidth={160}
-          />
-        </div>
-        <div
-          className={`min-w-0 overflow-hidden transition-[max-height,opacity] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-            open ? "max-h-0 opacity-0" : "max-h-14 opacity-100"
-          }`}
-          aria-hidden={open}
-        >
+          <ChevronUpGlyph />
+        </button>
+      ) : null}
+    </div>
+  );
+
+  const dockBar = open ? (
+    <div
+      className={`relative z-10 flex items-center gap-3 p-2.5 shrink-0 overflow-hidden pointer-events-none`}
+    >
+      {dockArtwork("sheet")}
+      <div className="min-w-0 flex-1" aria-hidden />
+      {transportControls}
+    </div>
+  ) : (
+    <div className="relative z-10 flex min-h-[3.75rem] items-stretch shrink-0 overflow-hidden pl-0 pr-2.5">
+      {dockArtwork("compact")}
+      <div
+        ref={durationSec > 0 ? scrubTargetRef : undefined}
+        className="relative min-h-0 min-w-0 flex-1 self-stretch bg-zinc-950/90"
+      >
+        {durationSec > 0 ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
+              style={{
+                width: `${displayProgress * 100}%`,
+                background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
+              }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+              aria-hidden
+            />
+            <div
+              className="absolute inset-0 z-[5] cursor-pointer touch-none select-none"
+              aria-hidden
+              onPointerDown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                setScrubDragging(true);
+                setDockTimelineFromClientX(e.clientX);
+                void getAudioElement()?.play();
+              }}
+            />
+          </>
+        ) : null}
+        <div className="relative z-10 flex h-full min-w-0 flex-col justify-center py-2 pl-3 pr-2 pointer-events-none">
           <div
             className="text-sm font-medium text-white truncate"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
@@ -132,69 +243,8 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             {track.artist}
           </div>
         </div>
-      </button>
-      <div
-        className={`relative z-10 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : ""}`}
-      >
-        <MiniGhostButton
-          active={shuffle}
-          label="Shuffle"
-          theme={theme}
-          transitionName="symph-control-shuffle"
-          controlPlate={!open}
-          onClick={() => toggleShuffle()}
-        >
-          <ShuffleGlyph />
-        </MiniGhostButton>
-        <IconButton
-          label="Previous"
-          transitionName="symph-control-prev"
-          controlPlate={!open}
-          onClick={() => prev()}
-        >
-          <PrevIcon />
-        </IconButton>
-        <IconButton
-          label={isPlaying ? "Pause" : "Play"}
-          transitionName="symph-control-play"
-          primary
-          controlPlate={!open}
-          onClick={() => {
-            const el = getAudioElement();
-            if (!el) return;
-            if (el.paused) void el.play();
-            else el.pause();
-          }}
-        >
-          {isPlaying ? <PauseIcon /> : <PlayIcon />}
-        </IconButton>
-        <IconButton
-          label="Next"
-          transitionName="symph-control-next"
-          controlPlate={!open}
-          onClick={() => next()}
-        >
-          <NextIcon />
-        </IconButton>
-        <MiniGhostButton
-          active={repeat !== "off"}
-          label="Repeat"
-          theme={theme}
-          transitionName="symph-control-repeat"
-          controlPlate={!open}
-          onClick={() => cycleRepeat()}
-        >
-          <RepeatGlyph mode={repeat} />
-        </MiniGhostButton>
-        <VolumePopoverButton
-          theme={theme}
-          variant="mini"
-          morphTransition
-          triggerClassName={
-            !open ? "bg-black/70 border border-white/15 shadow-sm" : "pointer-events-auto"
-          }
-        />
       </div>
+      {transportControls}
     </div>
   );
 
@@ -231,26 +281,6 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
             open ? "" : "rounded-b-2xl"
           }`}
         >
-          {!open && durationSec > 0 ? (
-            <>
-              <div
-                className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
-                style={{
-                  width: `${displayProgress * 100}%`,
-                  background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
-                }}
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
-                aria-hidden
-              />
-            </>
-          ) : null}
           {open ? (
             <div
               ref={durationSec > 0 ? scrubTargetRef : undefined}
@@ -323,6 +353,14 @@ function ChevronDownGlyph() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronUpGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

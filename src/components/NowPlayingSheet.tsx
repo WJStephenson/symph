@@ -86,15 +86,13 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
   if (!session || !track) return null;
 
   const transportControls = (
-    <div
-      className={`relative z-20 flex items-center gap-1 shrink-0 ${open ? "pointer-events-auto" : "h-full pointer-events-auto"}`}
-    >
+    <div className="relative z-20 flex shrink-0 items-center gap-1 pointer-events-auto">
       <MiniGhostButton
         active={shuffle}
         label="Shuffle"
         theme={theme}
         transitionName="symph-control-shuffle"
-        controlPlate={!open}
+        controlPlate={false}
         onClick={() => toggleShuffle()}
       >
         <ShuffleGlyph />
@@ -102,7 +100,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       <IconButton
         label="Previous"
         transitionName="symph-control-prev"
-        controlPlate={!open}
+        controlPlate={false}
         onClick={() => prev()}
       >
         <PrevIcon />
@@ -111,7 +109,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         label={isPlaying ? "Pause" : "Play"}
         transitionName="symph-control-play"
         primary
-        controlPlate={!open}
+        controlPlate={false}
         onClick={() => {
           const el = getAudioElement();
           if (!el) return;
@@ -124,7 +122,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       <IconButton
         label="Next"
         transitionName="symph-control-next"
-        controlPlate={!open}
+        controlPlate={false}
         onClick={() => next()}
       >
         <NextIcon />
@@ -134,7 +132,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         label="Repeat"
         theme={theme}
         transitionName="symph-control-repeat"
-        controlPlate={!open}
+        controlPlate={false}
         onClick={() => cycleRepeat()}
       >
         <RepeatGlyph mode={repeat} />
@@ -144,7 +142,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
         variant="mini"
         morphTransition
         triggerClassName={
-          !open ? "bg-black/70 border border-white/15 shadow-sm" : "pointer-events-auto"
+          open ? "pointer-events-auto" : "border-transparent bg-transparent shadow-none ring-0 hover:bg-white/10"
         }
       />
     </div>
@@ -196,11 +194,11 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       {transportControls}
     </div>
   ) : (
-    <div className="relative z-10 flex h-[60px] shrink-0 items-center overflow-hidden pl-0 pr-2.5">
+    <div className="relative z-10 flex h-[60px] shrink-0 items-center gap-[10px] overflow-hidden pl-0 pr-2.5">
       {dockArtwork("compact")}
       <div
         ref={durationSec > 0 ? scrubTargetRef : undefined}
-        className="relative h-full min-h-0 min-w-0 flex-1 self-stretch bg-zinc-950/90"
+        className="relative h-full min-h-0 min-w-0 flex-1 self-stretch overflow-hidden rounded-r-xl bg-zinc-950/90"
       >
         {durationSec > 0 ? (
           <>
@@ -248,7 +246,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           </div>
         </div>
       </div>
-      {transportControls}
+      <div className="relative z-20 flex shrink-0 items-center self-stretch rounded-xl border border-white/15 bg-black/65 py-1 pl-1.5 pr-1.5 shadow-sm ring-1 ring-black/35 backdrop-blur-sm">
+        {transportControls}
+      </div>
     </div>
   );
 

@@ -85,6 +85,9 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
 
   if (!session || !track) return null;
 
+  const compactDockCapsule =
+    "overflow-hidden rounded-xl border border-white/10 bg-zinc-950/[0.88] backdrop-blur-xl max-md:bg-zinc-950/[0.94]";
+
   const transportControls = (
     <div className="relative z-20 flex shrink-0 items-center gap-1 pointer-events-auto">
       <MiniGhostButton
@@ -157,7 +160,7 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
           e.stopPropagation();
           onOpen();
         }}
-        className="relative size-[60px] shrink-0 overflow-hidden rounded-l-2xl border-y border-r border-white/20 text-left shadow-sm ring-1 ring-black/40 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+        className="relative size-[60px] shrink-0 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-white/30"
         style={{ viewTransitionName: "symph-artwork" }}
       >
         <ArtworkImage
@@ -194,59 +197,61 @@ export function NowPlayingSheet({ open, onOpen, onClose }: Props) {
       {transportControls}
     </div>
   ) : (
-    <div className="relative z-10 flex h-[60px] shrink-0 items-center gap-[10px] overflow-hidden pl-0 pr-2.5">
-      {dockArtwork("compact")}
-      <div
-        ref={durationSec > 0 ? scrubTargetRef : undefined}
-        className="relative h-full min-h-0 min-w-0 flex-1 self-stretch overflow-hidden rounded-r-xl bg-zinc-950/90"
-      >
-        {durationSec > 0 ? (
-          <>
+    <div className="relative z-10 flex h-[60px] shrink-0 items-stretch gap-[10px] overflow-visible bg-transparent pl-0 pr-2.5">
+      <div className={`relative flex min-h-0 min-w-0 flex-1 items-stretch ${compactDockCapsule}`}>
+        {dockArtwork("compact")}
+        <div
+          ref={durationSec > 0 ? scrubTargetRef : undefined}
+          className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden"
+        >
+          {durationSec > 0 ? (
+            <>
+              <div
+                className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
+                style={{
+                  width: `${displayProgress * 100}%`,
+                  background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
+                }}
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+                aria-hidden
+              />
+              <div
+                className="absolute inset-0 z-[5] cursor-pointer touch-none select-none"
+                aria-hidden
+                onPointerDown={(e) => {
+                  if (e.button !== 0) return;
+                  e.preventDefault();
+                  setScrubDragging(true);
+                  setDockTimelineFromClientX(e.clientX);
+                  void getAudioElement()?.play();
+                }}
+              />
+            </>
+          ) : null}
+          <div className="relative z-10 flex h-full min-w-0 flex-col justify-center px-3 py-0 pointer-events-none">
             <div
-              className="pointer-events-none absolute inset-0 bg-zinc-950/90 transition-opacity duration-300 ease-out motion-reduce:transition-none"
-              aria-hidden
-            />
+              className="text-sm font-medium text-white truncate"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
+            >
+              {track.title}
+            </div>
             <div
-              className="pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-150 ease-linear"
-              style={{
-                width: `${displayProgress * 100}%`,
-                background: `linear-gradient(90deg, ${theme.progress} 0%, ${theme.fill} 100%)`
-              }}
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/45 via-black/25 to-black/50 transition-opacity duration-300 ease-out motion-reduce:transition-none"
-              aria-hidden
-            />
-            <div
-              className="absolute inset-0 z-[5] cursor-pointer touch-none select-none"
-              aria-hidden
-              onPointerDown={(e) => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                setScrubDragging(true);
-                setDockTimelineFromClientX(e.clientX);
-                void getAudioElement()?.play();
-              }}
-            />
-          </>
-        ) : null}
-        <div className="relative z-10 flex h-full min-w-0 flex-col justify-center px-3 py-0 pointer-events-none">
-          <div
-            className="text-sm font-medium text-white truncate"
-            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5)" }}
-          >
-            {track.title}
-          </div>
-          <div
-            className="text-xs text-zinc-200 truncate"
-            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
-          >
-            {track.artist}
+              className="text-xs text-zinc-200 truncate"
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.45)" }}
+            >
+              {track.artist}
+            </div>
           </div>
         </div>
       </div>
-      <div className="relative z-20 flex shrink-0 items-center self-stretch rounded-xl border border-white/15 bg-black/65 py-1 pl-1.5 pr-1.5 shadow-sm ring-1 ring-black/35 backdrop-blur-sm">
+      <div className={`relative z-20 flex shrink-0 items-center py-1 pl-1.5 pr-1.5 ${compactDockCapsule}`}>
         {transportControls}
       </div>
     </div>

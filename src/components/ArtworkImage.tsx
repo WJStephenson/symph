@@ -26,6 +26,21 @@ type ImageSource = {
   meta?: BaseItemDto;
 };
 
+function ArtworkSwirl() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+      <div
+        className="absolute left-1/2 top-1/2 h-[220%] w-[220%] -translate-x-1/2 -translate-y-1/2 animate-[spin_12s_linear_infinite] opacity-95"
+        style={{
+          background:
+            "conic-gradient(from 200deg at 50% 50%, #6366f1 0deg, #a855f7 55deg, #ec4899 110deg, #06b6d4 165deg, #22d3ee 220deg, #818cf8 275deg, #6366f1 360deg)"
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/40" />
+    </div>
+  );
+}
+
 export const ArtworkImage = memo(function ArtworkImage({
   session,
   itemId,
@@ -39,11 +54,15 @@ export const ArtworkImage = memo(function ArtworkImage({
 }: Props) {
   const [source, setSource] = useState<ImageSource | null>(null);
   const [url, setUrl] = useState<string | null>(null);
+  const [pipelineDone, setPipelineDone] = useState(false);
+  const [decoded, setDecoded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setSource(null);
     setUrl(null);
+    setPipelineDone(false);
+    setDecoded(false);
     void (async () => {
       let meta = item?.Id === itemId ? item : undefined;
       if (meta) {
@@ -93,35 +112,68 @@ export const ArtworkImage = memo(function ArtworkImage({
   }, [session, itemId, item]);
 
   useEffect(() => {
+    if (!url) {
+      setDecoded(false);
+      return;
+    }
+    let cancelled = false;
+    setDecoded(false);
+    void (async () => {
+      try {
+        const img = new Image();
+        img.src = url;
+        if (img.decode) {
+          await img.decode();
+        } else {
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject();
+          });
+        }
+      } catch {}
+      if (!cancelled) setDecoded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  useEffect(() => {
     if (!source) return;
     const { fetchId, hint, meta } = source;
     const opts = { type, maxWidth, item: hint, imageItemId: fetchId };
     const skipFetch = hint && hint.Id === fetchId ? primaryImageKnownAbsent(hint) : false;
     if (skipFetch) {
       setUrl(null);
+      setPipelineDone(true);
       return;
     }
     const cached = peekArtworkObjectUrl(session, itemId, opts);
     if (cached) {
       setUrl(cached);
+      setPipelineDone(true);
       return;
     }
     let cancelled = false;
     void (async () => {
       let blobUrl = await getArtworkObjectUrl(session, itemId, opts);
-      if (!blobUrl && meta) {
-        const fallback = await resolveWorkingFallbackArtwork(session, meta, fetchId);
-        if (!cancelled && fallback) {
-          blobUrl = await getArtworkObjectUrl(session, itemId, {
-            type,
-            maxWidth,
-            item: fallback,
-            imageItemId: fallback.Id
-          });
+      if (!blobUrl) {
+        const basis = meta ?? (item?.Id === itemId ? item : undefined);
+        if (basis) {
+          const fallback = await resolveWorkingFallbackArtwork(session, basis, fetchId);
+          if (!cancelled && fallback) {
+            blobUrl = await getArtworkObjectUrl(session, fallback.Id, {
+              type,
+              maxWidth,
+              item: fallback,
+              imageItemId: fallback.Id
+            });
+          }
         }
       }
       if (cancelled) return;
       setUrl(blobUrl);
+      setPipelineDone(true);
       if (!blobUrl || skipColourAnalysis || !onColour || type !== "Primary") return;
       try {
         const res = await fetch(blobUrl);
@@ -159,40 +211,44 @@ export const ArtworkImage = memo(function ArtworkImage({
     return () => {
       cancelled = true;
     };
-  }, [session, itemId, source, type, maxWidth, onColour, skipColourAnalysis]);
+  }, [session, itemId, source, type, maxWidth, onColour, skipColourAnalysis, item]);
 
   const placeholderMeta = source?.meta ?? (item?.Id === itemId ? item : undefined);
   const placeholderLabel = placeholderMeta
     ? artistName(placeholderMeta)
     : (alt ?? "").trim();
 
-  if (!url) {
-    const shell =
-      className ??
-      "rounded-3xl bg-gradient-to-br from-indigo-900/60 to-zinc-900 border border-white/10";
+  const missing = pipelineDone && !url;
+  const showSwirl = !pipelineDone || (url !== null && !decoded);
+
+  if (url && decoded) {
     return (
-      <div
-        className={`${shell} flex min-h-0 min-w-0 items-center justify-center ${
-          placeholderLabel ? "p-1.5" : ""
-        }`}
-      >
-        {placeholderLabel ? (
-          <span className="line-clamp-4 text-center text-[10px] font-medium leading-tight text-zinc-200">
-            {placeholderLabel}
-          </span>
-        ) : null}
-      </div>
+      <img
+        src={url}
+        alt={alt ?? ""}
+        className={className}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+      />
     );
   }
 
+  const shell =
+    className ??
+    "rounded-3xl bg-gradient-to-br from-indigo-900/60 to-zinc-900 border border-white/10";
   return (
-    <img
-      src={url}
-      alt={alt ?? ""}
-      className={className}
-      loading="lazy"
-      decoding="async"
-      fetchPriority="low"
-    />
+    <div
+      className={`${shell} relative flex min-h-0 min-w-0 items-center justify-center overflow-hidden ${
+        missing && placeholderLabel ? "p-1.5" : ""
+      }`}
+    >
+      {showSwirl ? <ArtworkSwirl /> : null}
+      {missing && placeholderLabel ? (
+        <span className="relative z-10 line-clamp-4 text-center text-[10px] font-medium leading-tight text-zinc-200">
+          {placeholderLabel}
+        </span>
+      ) : null}
+    </div>
   );
 });

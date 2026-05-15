@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import {
-  fetchImageBlob,
+  fetchItem,
   reportPlaybackProgress,
   reportPlaybackStarted,
   reportPlaybackStopped,
+  resolveWorkingFallbackArtwork,
   streamUrl
 } from "@/jellyfin/client";
 import { queueCoverItem, ticksToSec } from "@/lib/format";
@@ -26,7 +27,6 @@ export function PlaybackEngine() {
   const setArtwork = usePlayerStore((s) => s.setArtwork);
   const setAccent = usePlayerStore((s) => s.setAccent);
   const next = usePlayerStore((s) => s.next);
-  const artworkRevoke = useRef<string | null>(null);
 
   const track = queue[index];
   const trackId = track?.id;
@@ -62,34 +62,56 @@ export function PlaybackEngine() {
 
   useEffect(() => {
     if (!session || !track) {
-      if (artworkRevoke.current) {
-        URL.revokeObjectURL(artworkRevoke.current);
-        artworkRevoke.current = null;
-      }
       setArtwork(null);
       setAccent(null);
       return;
     }
     let cancelled = false;
-    (async () => {
-      const id = track.albumId ?? track.id;
-      const blob = await fetchImageBlob(session, id, "Primary", 900, {
-        item: queueCoverItem(track)
-      });
-      if (cancelled) return;
-      if (artworkRevoke.current) {
-        URL.revokeObjectURL(artworkRevoke.current);
-        artworkRevoke.current = null;
+    const coverId = track.albumId ?? track.id;
+    const hint = queueCoverItem(track);
+    void (async () => {
+      setArtwork(null);
+      setAccent(null);
+      let meta = hint && hint.Id === coverId ? hint : undefined;
+      if (!meta) {
+        try {
+          meta = await fetchItem(
+            session,
+            coverId,
+            "AlbumArtists,Artists,ParentId,Type,ImageTags"
+          );
+        } catch {
+          meta = undefined;
+        }
       }
-      if (!blob) {
-        setArtwork(null);
+      if (cancelled) return;
+      let objectUrl = await getArtworkObjectUrl(session, coverId, {
+        maxWidth: 900,
+        item: meta && meta.Id === coverId ? meta : undefined,
+        imageItemId: coverId
+      });
+      if (!objectUrl) {
+        const basis = meta ?? track.raw;
+        if (basis) {
+          const fallback = await resolveWorkingFallbackArtwork(session, basis, coverId);
+          if (!cancelled && fallback) {
+            objectUrl = await getArtworkObjectUrl(session, fallback.Id, {
+              maxWidth: 900,
+              item: fallback,
+              imageItemId: fallback.Id
+            });
+          }
+        }
+      }
+      if (cancelled) return;
+      setArtwork(objectUrl);
+      if (!objectUrl) {
         setAccent(null);
         return;
       }
-      const u = URL.createObjectURL(blob);
-      artworkRevoke.current = u;
-      setArtwork(u);
       try {
+        const res = await fetch(objectUrl);
+        const blob = await res.blob();
         const bmp = await createImageBitmap(blob);
         const c = document.createElement("canvas");
         const w = 32;

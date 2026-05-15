@@ -117,7 +117,10 @@ export async function fetchPlaylistTracks(
 ): Promise<BaseItemDto[]> {
   const url = new URL(`${session.serverUrl}/Playlists/${playlistId}/Items`);
   url.searchParams.set("userId", session.userId);
-  url.searchParams.set("Fields", "PrimaryImageAspectRatio,UserData,ImageTags");
+  url.searchParams.set(
+    "Fields",
+    "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
+  );
   const res = await fetch(mediaApiUrl(session, url), { headers: buildHeaders(session) });
   if (!res.ok) throw new Error("Could not load playlist tracks");
   const data = (await res.json()) as ItemsResponse;

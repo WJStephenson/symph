@@ -220,6 +220,25 @@ export async function resolveWorkingFallbackArtwork(
   failedFetchId: string
 ): Promise<BaseItemDto | null> {
   if (!meta?.Id) return null;
+  const parentPrimary = meta.ParentPrimaryImageItemId;
+  if (
+    parentPrimary &&
+    parentPrimary !== failedFetchId &&
+    (meta.Type === "Audio" || meta.Type === "MusicAlbum")
+  ) {
+    const probe = await fetchImageBlob(session, parentPrimary, "Primary", 96);
+    if (probe) {
+      try {
+        return await fetchItem(
+          session,
+          parentPrimary,
+          "Type,ImageTags,AlbumArtists,Artists,ParentId"
+        );
+      } catch {
+        return null;
+      }
+    }
+  }
   if (meta.Type === "MusicArtist") {
     return fetchFirstDescendantWithWorkingPrimaryImage(session, meta.Id, [failedFetchId]);
   }
@@ -260,7 +279,8 @@ export async function fetchAllAudioUnderParent(
       SortBy: "SortName",
       StartIndex: start,
       Limit: limit,
-      Fields: "PrimaryImageAspectRatio,UserData"
+      Fields:
+        "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
     });
     const batch = data.Items ?? [];
     if (!batch.length) break;

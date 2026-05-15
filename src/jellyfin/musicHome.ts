@@ -69,7 +69,8 @@ export async function fetchRecentTracks(session: JellyfinSession, libraryId: str
     SortBy: "DatePlayed",
     SortOrder: "Descending",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
+    Fields:
+      "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
   });
   return r.Items ?? [];
 }
@@ -81,7 +82,8 @@ export async function fetchRandomTracks(session: JellyfinSession, libraryId: str
     IncludeItemTypes: "Audio",
     SortBy: "Random",
     Limit: limit,
-    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
+    Fields:
+      "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
   });
   const items = r.Items ?? [];
   if (items.length >= 8) return items;
@@ -92,7 +94,8 @@ export async function fetchRandomTracks(session: JellyfinSession, libraryId: str
     SortBy: "DateCreated",
     SortOrder: "Descending",
     Limit: 120,
-    Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
+    Fields:
+      "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
   });
   const all = pool.Items ?? [];
   const shuffled = [...all].sort(() => Math.random() - 0.5);

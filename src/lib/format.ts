@@ -31,15 +31,17 @@ export function primaryImageKnownAbsent(item: BaseItemDto): boolean {
 export function queueCoverItem(track: QueueTrack): BaseItemDto | undefined {
   const artworkId = track.albumId ?? track.id;
   if (track.albumRaw?.Id === artworkId) return track.albumRaw;
+  if (track.raw?.Id === artworkId) return track.raw;
   return undefined;
 }
 
 export function toQueueTrack(item: BaseItemDto, album?: BaseItemDto): QueueTrack {
+  const albumId = album?.Id ?? item.AlbumId ?? item.ParentPrimaryImageItemId ?? item.ParentId;
   return {
     id: item.Id,
     title: item.Name ?? "Untitled",
     artist: artistName(item),
-    albumId: album?.Id ?? item.ParentId,
+    albumId,
     albumTitle: album?.Name,
     albumRaw: album,
     durationTicks: item.RunTimeTicks,

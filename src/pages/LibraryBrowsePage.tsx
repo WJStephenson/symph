@@ -41,7 +41,8 @@ export function LibraryBrowsePage() {
           Recursive: false,
           IncludeItemTypes: "MusicAlbum,MusicArtist,Folder,Playlist,Audio",
           SortBy: "SortName",
-          Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
+          Fields:
+            "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
         });
         if (cancelled) return;
         let list = res.Items ?? [];
@@ -53,7 +54,8 @@ export function LibraryBrowsePage() {
             SortBy: "DateCreated",
             SortOrder: "Descending",
             Limit: 150,
-            Fields: "PrimaryImageAspectRatio,UserData,ImageTags"
+            Fields:
+              "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
           });
           if (!cancelled) list = deep.Items ?? [];
         }
@@ -132,7 +134,8 @@ export function LibraryBrowsePage() {
               IncludeItemTypes: "Audio",
               SortBy: "Random",
               Limit: 48,
-              Fields: "PrimaryImageAspectRatio,UserData"
+              Fields:
+                "PrimaryImageAspectRatio,UserData,ImageTags,AlbumId,ParentId,ParentPrimaryImageItemId,AlbumArtists,Artists"
             })
           )
         );
